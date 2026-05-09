@@ -1,0 +1,98 @@
+categories:
+- short_name: jpn
+  name: Japan
+  url: https://qoj.ac/category/49
+- short_name: kor
+  name: Korea
+  url: https://qoj.ac/category/50
+- short_name: ptz
+  name: Petrozavodsk Training Camp
+  description: 러시아·동유럽 주축으로 운영하는 대회로, 난이도가 전반적으로 높고 수학 비중이 강한 편이다.
+  url: https://qoj.ac/category/5
+- short_name: oi
+  name: Olympiad in Informatics
+  description: 최고의 대회
+  url: https://qoj.ac/category/3
+problem_sets:
+- title: ICPC Seoul Regional
+  external_url: https://qoj.ac/category/50
+  categories:
+  - kor
+- title: ICPC Yokohama Regional
+  external_url: https://qoj.ac/category/49
+  categories:
+  - jpn
+  children:
+  - title: Yokohama 2022
+    year: 2022
+    problems:
+    - label: A
+      title: Hasty Santa Claus
+      external_url: https://qoj.ac/contest/1101/problem/5470
+      tier: 12
+    - label: B
+      title: Interactive Number Guessing
+      external_url: https://qoj.ac/contest/1101/problem/5471
+      tier: 13
+- title: PTZ Camp
+  description: Petrozavodsk Training Camp는 러시아·동유럽 팀들이 주축이 되어 운영하는 ICPC 스타일 팀 대회로,
+    문제 난이도가 전반적으로 높고 수학 비중이 강한 편이라는 평판이 있다.
+  categories:
+  - ptz
+  children:
+  - title: PTZ 2023 Summer
+    year: 2023
+    external_url: https://qoj.ac/category/263
+    children:
+    - title: 'Day 1: Starting Contest'
+      year: 2023
+      external_url: https://qoj.ac/contest/1101
+      problems:
+      - label: A
+        title: Hasty Santa Claus
+        external_url: https://qoj.ac/contest/1101/problem/5470
+        tier: 12
+      - label: B
+        title: Interactive Number Guessing
+        external_url: https://qoj.ac/contest/1101/problem/5471
+        tier: 13
+  - title: PTZ 2024 Summer
+    year: 2024
+    external_url: https://qoj.ac/contest/1101
+    children:
+    - title: 'Day 2: K-ontest'
+      year: 2024
+      problems:
+      - label: A
+        title: Simple Link Cut Problem
+        external_url: https://qoj.ac/contest/1806/problem/10000
+        tier: 26
+      - label: B
+        title: Sieve Game
+        external_url: https://qoj.ac/contest/1806/problem/10001
+        tier: 11
+- title: OI
+  external_url: https://qoj.ac/category/3
+  children:
+  - title: International Olympiad in Informatics
+    external_url: https://oj.uz/problems/source/ioi
+    categories:
+    - oi
+  - title: Korean Olympiad in Informatics
+    children:
+      - title: Korean Team Selection Contest
+        children:
+        - title: 2025년 선발고사
+        
+      - title: KOI
+        children:
+        - title: KOI 1차 대회
+        - title: KOI 2차 대회
+          children:
+          - title: KOI 2025 2차 대회
+          - title: KOI 2024 2차 대회
+          - title: KOI 2023 2차 대회
+          - title: KOI 2022 2차 대회
+  - title: Japanese Olympiad in Informatics
+    children:
+    - title: JOI 

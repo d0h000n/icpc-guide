@@ -1,0 +1,18 @@
+{% comment %}
+Personal completion counter for one ProblemSet.
+Expects: problem_set, solved_count, total_count.
+Optional: oob — when truthy, marks the span as an HTMX OOB swap target.
+{% endcomment %}
+<span id="completion-{{ problem_set.pk }}"
+      {% if oob %}hx-swap-oob="true"{% endif %}
+      class="flex items-center gap-3 text-sm">
+  {% if total_count %}
+    <progress class="progress progress-success w-32 align-middle"
+              value="{{ solved_count }}" max="{{ total_count }}"></progress>
+    <span class="font-mono text-xs whitespace-nowrap">
+      {{ solved_count }} / {{ total_count }}
+    </span>
+  {% else %}
+    <span class="opacity-50">문제 없음</span>
+  {% endif %}
+</span>

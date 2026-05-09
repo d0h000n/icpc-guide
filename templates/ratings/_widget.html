@@ -1,0 +1,71 @@
+{% comment %}
+Rating widget for one ProblemSet (spec §4.5.1).
+Expects: problem_set, my_rating (Rating | None), avg_stars (float),
+rating_count (int), stars_range (range 1..5).
+HTMX targets: this whole element swaps on rate/unrate.
+{% endcomment %}
+<div id="rating-widget-{{ problem_set.pk }}" class="flex flex-col gap-2">
+  <div class="flex items-center gap-3 flex-wrap">
+    {% if user.is_authenticated %}
+      <div class="flex items-center gap-1" role="group" aria-label="별점">
+        {% for n in stars_range %}
+          <button type="button"
+                  hx-post="{% url 'ratings:rate' problem_set_pk=problem_set.pk %}"
+                  hx-vals='{"stars": {{ n }}}'
+                  hx-target="#rating-widget-{{ problem_set.pk }}"
+                  hx-swap="outerHTML"
+                  class="btn btn-xs px-1 {% if my_rating and my_rating.stars >= n %}btn-warning{% else %}btn-ghost{% endif %}"
+                  aria-label="{{ n }}점"
+                  aria-pressed="{% if my_rating and my_rating.stars == n %}true{% else %}false{% endif %}">
+            ★
+          </button>
+        {% endfor %}
+        {% if my_rating %}
+          <button type="button"
+                  hx-post="{% url 'ratings:unrate' problem_set_pk=problem_set.pk %}"
+                  hx-target="#rating-widget-{{ problem_set.pk }}"
+                  hx-swap="outerHTML"
+                  class="btn btn-ghost btn-xs ml-2 opacity-70">
+            취소
+          </button>
+        {% endif %}
+      </div>
+    {% else %}
+      <div class="flex items-center gap-1" aria-label="평균 별점">
+        {% for n in stars_range %}
+          {% if avg_stars >= n %}
+            <span class="text-warning text-lg leading-none">★</span>
+          {% elif avg_stars >= n|add:"-0.5" %}
+            <span class="text-warning/60 text-lg leading-none">★</span>
+          {% else %}
+            <span class="opacity-20 text-lg leading-none">★</span>
+          {% endif %}
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div class="text-xs opacity-70 flex items-center gap-2">
+      {% if rating_count %}
+        <span>
+          평균 <span class="font-mono">{{ avg_stars|floatformat:1 }}</span>
+          · {{ rating_count }}명 평가
+        </span>
+        {% if user.is_authenticated %}
+          <button type="button"
+                  hx-get="{% url 'ratings:raters' problem_set_pk=problem_set.pk %}"
+                  hx-target="#raters-modal-container"
+                  hx-swap="innerHTML"
+                  class="btn btn-ghost btn-xs">
+            평가자 보기
+          </button>
+        {% endif %}
+      {% else %}
+        아직 평가 없음
+      {% endif %}
+    </div>
+  </div>
+
+  {% if user.is_authenticated and my_rating %}
+    <div class="text-xs opacity-60">내 별점: {{ my_rating.stars }}점</div>
+  {% endif %}
+</div>

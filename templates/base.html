@@ -1,0 +1,74 @@
+{% load static %}<!DOCTYPE html>
+<html lang="ko" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <title>{% block title %}Problem Set Tracker{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/htmx.org@2.0.4" defer></script>
+  <script>
+    // Read the current CSRF token from the cookie (not from a render-time
+    // value). This survives token rotation across tabs / login-logout cycles.
+    function _csrfTokenFromCookie() {
+      var match = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);
+      return match ? decodeURIComponent(match[1]) : null;
+    }
+
+    // Wire CSRF for every HTMX request.
+    document.addEventListener("htmx:configRequest", function (event) {
+      var token = _csrfTokenFromCookie();
+      if (!token) {
+        var meta = document.querySelector("meta[name=csrf-token]");
+        if (meta) token = meta.content;
+      }
+      if (token) event.detail.headers["X-CSRFToken"] = token;
+    });
+
+    // Refresh the hidden CSRF input on every plain form POST so a stale page
+    // (loaded before a token rotation) still submits with the live cookie value.
+    document.addEventListener("submit", function (event) {
+      var form = event.target;
+      if (!form || (form.method || "").toLowerCase() !== "post") return;
+      var input = form.querySelector("input[name='csrfmiddlewaretoken']");
+      if (!input) return;
+      var token = _csrfTokenFromCookie();
+      if (token) input.value = token;
+    }, true);
+  </script>
+</head>
+<body class="min-h-screen bg-base-200">
+  <div class="navbar bg-base-100 shadow-sm">
+    <div class="flex-1 gap-1">
+      <a href="{% url 'home' %}" class="btn btn-ghost text-xl">PS Tracker</a>
+      <a href="{% url 'problemsets:list' %}" class="btn btn-ghost btn-sm">출처</a>
+      <a href="{% url 'categories:list' %}" class="btn btn-ghost btn-sm">둘러보기</a>
+    </div>
+    <div class="flex-none gap-2">
+      {% if user.is_authenticated %}
+        <span class="text-sm">{{ user.nickname }}</span>
+        <a href="{% url 'accounts:me' %}" class="btn btn-ghost btn-sm">마이페이지</a>
+        <form method="post" action="{% url 'account_logout' %}" class="inline">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-ghost btn-sm">로그아웃</button>
+        </form>
+      {% else %}
+        <a href="{% url 'account_login' %}" class="btn btn-primary btn-sm">로그인</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <main class="container mx-auto px-4 py-8">
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert {% if message.tags == 'error' %}alert-error{% else %}alert-info{% endif %} mb-4">
+          <span>{{ message }}</span>
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

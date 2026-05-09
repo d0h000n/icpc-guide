@@ -1,0 +1,12 @@
+{% comment %}
+Toggle button for one Problem viewed within a ProblemSet.
+Expects: problem, problem_set, is_solved (bool).
+{% endcomment %}
+<button id="solve-btn-{{ problem_set.pk }}-{{ problem.pk }}"
+        type="button"
+        hx-post="{% url 'solving:toggle' problem_set_pk=problem_set.pk problem_pk=problem.pk %}"
+        hx-swap="outerHTML"
+        class="btn btn-xs {% if is_solved %}btn-success{% else %}btn-outline{% endif %}"
+        aria-pressed="{{ is_solved|yesno:'true,false' }}">
+  {% if is_solved %}✓ 푼 문제{% else %}체크{% endif %}
+</button>

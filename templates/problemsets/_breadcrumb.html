@@ -1,0 +1,14 @@
+{# Breadcrumb of ancestors leading to the current ProblemSet. #}
+<nav class="text-sm breadcrumbs mb-4">
+  <ul>
+    <li><a href="/sets/" class="opacity-60 hover:opacity-100">전체</a></li>
+    {% for ancestor in ancestors %}
+      <li>
+        <a href="{% url 'problemsets:detail' pk=ancestor.pk %}" class="opacity-75 hover:opacity-100">
+          {{ ancestor.title }}
+        </a>
+      </li>
+    {% endfor %}
+    <li class="font-semibold">{{ problem_set.title }}</li>
+  </ul>
+</nav>

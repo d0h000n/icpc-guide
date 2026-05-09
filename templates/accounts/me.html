@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}마이페이지{% endblock %}
+
+{% block content %}
+  <div class="card bg-base-100 shadow max-w-xl mx-auto">
+    <div class="card-body">
+      <h2 class="card-title">마이페이지</h2>
+      <dl class="grid grid-cols-[120px_1fr] gap-y-2 mt-4 text-sm">
+        <dt class="opacity-60">닉네임</dt><dd>{{ user.nickname }}</dd>
+        <dt class="opacity-60">이메일</dt><dd>{{ user.email }}</dd>
+        <dt class="opacity-60">가시성</dt><dd>{{ user.get_profile_visibility_display }}</dd>
+      </dl>
+      <p class="text-xs opacity-50 mt-4">프로필 편집은 이후 단계에서 구현됩니다.</p>
+    </div>
+  </div>
+{% endblock %}

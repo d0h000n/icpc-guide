@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}둘러보기 · Problem Set Tracker{% endblock %}
+
+{% block content %}
+  <div class="flex items-baseline justify-between mb-4">
+    <h1 class="text-2xl font-bold">카테고리</h1>
+    <p class="text-sm opacity-60">총 {{ categories|length }}개</p>
+  </div>
+
+  {% if categories %}
+    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {% for category in categories %}
+        <article class="card bg-base-100 shadow">
+          <div class="card-body">
+            <div class="flex items-baseline justify-between gap-2">
+              <h2 class="card-title text-lg">
+                <span class="badge badge-outline badge-sm font-mono">{{ category.short_name }}</span>
+                <span class="truncate">{{ category.name }}</span>
+              </h2>
+            </div>
+
+            {% if category.description %}
+              <p class="text-sm opacity-75 mt-1 whitespace-pre-line">{{ category.description }}</p>
+            {% endif %}
+
+            <div class="text-xs opacity-60 mt-2">
+              ProblemSet {{ category.problem_set_count }}개
+            </div>
+
+            <div class="card-actions justify-end mt-3 gap-2">
+              {% if category.url %}
+                <a href="{{ category.url }}" target="_blank" rel="noopener noreferrer"
+                   class="btn btn-ghost btn-sm">홈페이지 ↗</a>
+              {% endif %}
+              <a href="{% url 'problemsets:list' %}?category={{ category.short_name }}"
+                 class="btn btn-primary btn-sm">set 둘러보기</a>
+            </div>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card bg-base-100 shadow">
+      <div class="card-body text-center opacity-60 text-sm py-12">
+        아직 등록된 카테고리가 없습니다. admin에서 추가해 주세요.
+      </div>
+    </div>
+  {% endif %}
+{% endblock %}

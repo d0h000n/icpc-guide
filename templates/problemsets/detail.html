@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}{{ problem_set.title }} · Problem Set Tracker{% endblock %}
+
+{% block content %}
+  {% include "problemsets/_breadcrumb.html" %}
+
+  <article class="card bg-base-100 shadow mb-6">
+    <div class="card-body">
+      <h1 class="card-title text-2xl">{{ problem_set.title }}</h1>
+
+      <div class="flex flex-wrap gap-2 text-sm opacity-75 mt-2">
+        {% for cat in inherited_categories %}
+          <a href="{% url 'problemsets:list' %}?category={{ cat.short_name }}"
+             class="badge badge-outline hover:badge-primary">{{ cat.short_name }}</a>
+        {% endfor %}
+        {% if problem_set.year %}
+          <span class="badge badge-outline">{{ problem_set.year }}</span>
+        {% endif %}
+      </div>
+
+      {% if problem_set.description %}
+        <p class="mt-4 whitespace-pre-line">{{ problem_set.description }}</p>
+      {% endif %}
+
+      {% if problem_set.external_url %}
+        <p class="mt-2">
+          <a href="{{ problem_set.external_url }}" rel="noopener noreferrer"
+             target="_blank" class="link">외부 링크 ↗</a>
+        </p>
+      {% endif %}
+
+      {% if user.is_authenticated %}
+        <div class="mt-4">
+          {% include "solving/_completion_counter.html" with problem_set=problem_set solved_count=solved_count total_count=total_count %}
+        </div>
+      {% endif %}
+
+      <div class="mt-4 pt-4 border-t border-base-200">
+        {% include "ratings/_widget.html" %}
+      </div>
+    </div>
+  </article>
+
+  {% if is_leaf %}
+    <section class="card bg-base-100 shadow">
+      <div class="card-body">
+        <h2 class="card-title text-lg">문제 목록</h2>
+        {% if appearances %}
+          <div class="overflow-x-auto">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th class="w-16">#</th>
+                  <th class="w-20">라벨</th>
+                  <th>제목</th>
+                  <th class="w-32">티어</th>
+                  <th class="w-24">링크</th>
+                  {% if user.is_authenticated %}
+                    <th class="w-28">해결</th>
+                  {% endif %}
+                </tr>
+              </thead>
+              <tbody>
+                {% for appearance in appearances %}
+                  <tr>
+                    <td>{{ appearance.order_index }}</td>
+                    <td><span class="font-mono">{{ appearance.label }}</span></td>
+                    <td>{{ appearance.problem.title }}</td>
+                    <td>
+                      {% if appearance.problem.solved_ac_tier_manual %}
+                        {{ appearance.problem.get_solved_ac_tier_manual_display }}
+                      {% else %}
+                        <span class="opacity-30">—</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if appearance.problem.external_url %}
+                        <a href="{{ appearance.problem.external_url }}" rel="noopener noreferrer"
+                           target="_blank" class="link link-primary">↗</a>
+                      {% else %}
+                        <span class="opacity-30">—</span>
+                      {% endif %}
+                    </td>
+                    {% if user.is_authenticated %}
+                      <td>
+                        {% include "solving/_toggle_button.html" with problem=appearance.problem problem_set=problem_set is_solved=appearance.is_solved_by_me %}
+                      </td>
+                    {% endif %}
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% if not user.is_authenticated %}
+            <p class="text-xs opacity-60 mt-3">
+              <a href="{% url 'account_login' %}" class="link">로그인</a>하면 풀이를 체크할 수 있습니다.
+            </p>
+          {% endif %}
+        {% else %}
+          <p class="opacity-60 text-sm">아직 등록된 문제가 없습니다.</p>
+        {% endif %}
+      </div>
+    </section>
+  {% else %}
+    <section class="card bg-base-100 shadow">
+      <div class="card-body">
+        <h2 class="card-title text-lg">하위 set</h2>
+        {% if children %}
+          <ul class="divide-y divide-base-200">
+            {% for entry in children %}
+              <li class="py-3 flex items-center justify-between gap-4 flex-wrap">
+                <div class="min-w-0">
+                  <a href="{% url 'problemsets:detail' pk=entry.node.pk %}"
+                     class="link link-hover font-medium">{{ entry.node.title }}</a>
+                  <div class="text-xs opacity-60 mt-0.5">
+                    {% for cat in entry.node.categories.all %}<span class="badge badge-ghost badge-xs mr-1">{{ cat.short_name }}</span>{% endfor %}{% if entry.node.year %}{% if entry.node.categories.exists %} · {% endif %}{{ entry.node.year }}{% endif %} · {% if entry.node.is_leaf %}리프{% else %}자식 {{ entry.node.numchild }}개{% endif %}
+                  </div>
+                </div>
+                {% if user.is_authenticated %}
+                  {% include "solving/_completion_counter.html" with problem_set=entry.node solved_count=entry.solved total_count=entry.total %}
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="opacity-60 text-sm">아직 하위 set이 없습니다.</p>
+        {% endif %}
+      </div>
+    </section>
+  {% endif %}
+
+  <div class="mt-6">
+    {% include "ratings/_comments_section.html" %}
+  </div>
+
+  {# Raters modal mount point — populated on demand by HTMX #}
+  <div id="raters-modal-container"></div>
+{% endblock %}

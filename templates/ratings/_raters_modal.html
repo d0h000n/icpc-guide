@@ -1,0 +1,39 @@
+{% comment %}
+Raters list modal (spec §4.5.1, login-only).
+Replaces the contents of #raters-modal-container on detail page.
+Each rating row is rendered with its row.stars_filled / row.stars_empty
+range iterators (computed in the view).
+{% endcomment %}
+<div id="raters-modal" class="modal modal-open" role="dialog" aria-modal="true">
+  <div class="modal-box max-w-md">
+    <button type="button"
+            onclick="document.getElementById('raters-modal').remove()"
+            class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+            aria-label="닫기">✕</button>
+    <h3 class="font-bold text-lg">평가자 목록 ({{ ratings|length }})</h3>
+    <p class="text-xs opacity-60 mt-1">{{ problem_set.title }}</p>
+
+    {% if ratings %}
+      <ul class="divide-y divide-base-200 mt-3 max-h-96 overflow-y-auto">
+        {% for r in ratings %}
+          <li class="py-2 flex items-center justify-between gap-3">
+            <span class="text-sm truncate">{{ r.user.nickname }}</span>
+            <span class="font-mono text-sm whitespace-nowrap">
+              {% for _ in r.stars_filled %}<span class="text-warning">★</span>{% endfor %}{% for _ in r.stars_empty %}<span class="opacity-20">★</span>{% endfor %}
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-sm opacity-60 mt-3">아직 평가가 없습니다.</p>
+    {% endif %}
+
+    <div class="modal-action">
+      <button type="button"
+              onclick="document.getElementById('raters-modal').remove()"
+              class="btn btn-sm">닫기</button>
+    </div>
+  </div>
+  <div class="modal-backdrop"
+       onclick="document.getElementById('raters-modal').remove()"></div>
+</div>

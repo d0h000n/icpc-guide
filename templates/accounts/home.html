@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}홈 · Problem Set Tracker{% endblock %}
+
+{% block content %}
+  <div class="hero bg-base-100 rounded-box shadow">
+    <div class="hero-content text-center py-16">
+      <div class="max-w-md">
+        {% if user.is_authenticated %}
+          <h1 class="text-3xl font-bold">Hello, {{ user.nickname }} 👋</h1>
+          <p class="py-6 opacity-75">
+            problem set 트래킹을 시작해 봅시다.
+          </p>
+          <div class="flex gap-2 justify-center">
+            <a href="{% url 'categories:list' %}" class="btn btn-primary">둘러보기</a>
+            <a href="{% url 'problemsets:list' %}" class="btn">출처 트리 보기</a>
+          </div>
+        {% else %}
+          <h1 class="text-3xl font-bold">Problem Set Tracker</h1>
+          <p class="py-6 opacity-75">
+            ICPC, CERC, WF 등 경쟁 프로그래밍 problem set의 풀이 트래킹과 퀄리티 평가.
+          </p>
+          <div class="flex gap-2 justify-center">
+            <a href="{% url 'categories:list' %}" class="btn">먼저 둘러보기</a>
+            <a href="{% url 'account_login' %}" class="btn btn-primary">시작하기</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

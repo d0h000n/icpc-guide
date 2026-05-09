@@ -1,0 +1,8 @@
+{% comment %}
+HTMX toggle response.
+- Main swap: replaces the clicked button via outerHTML.
+- OOB swap: re-renders the completion counter span (matched by id).
+{% endcomment %}
+{% include "solving/_toggle_button.html" %}
+
+{% include "solving/_completion_counter.html" with oob=True %}

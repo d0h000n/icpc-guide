@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}가입 마무리{% endblock %}
+
+{% block content %}
+  <div class="card bg-base-100 shadow max-w-md mx-auto">
+    <div class="card-body">
+      <h2 class="card-title">가입 마무리</h2>
+      <p class="text-sm opacity-75 mb-4">
+        닉네임을 정해 주세요. 이후 마이페이지에서 변경할 수 있습니다.
+      </p>
+      <form method="post" class="flex flex-col gap-3">
+        {% csrf_token %}
+        {% for field in form %}
+          <div class="form-control">
+            <label class="label" for="{{ field.id_for_label }}">
+              <span class="label-text">{{ field.label }}</span>
+            </label>
+            {{ field }}
+            {% if field.help_text %}
+              <span class="label-text-alt opacity-60 mt-1">{{ field.help_text }}</span>
+            {% endif %}
+            {% for error in field.errors %}
+              <span class="label-text-alt text-error mt-1">{{ error }}</span>
+            {% endfor %}
+          </div>
+        {% endfor %}
+        {% if form.non_field_errors %}
+          <div class="alert alert-error">
+            {{ form.non_field_errors }}
+          </div>
+        {% endif %}
+        {% if redirect_field_value %}
+          <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+        {% endif %}
+        <button type="submit" class="btn btn-primary mt-2">가입</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}둘러보기 · Problem Set Tracker{% endblock %}
+
+{% block content %}
+  <div class="grid gap-6 md:grid-cols-[240px_1fr]">
+
+    {# --- Filter sidebar --- #}
+    <aside>
+      <form method="get" class="card bg-base-100 shadow">
+        <div class="card-body p-4">
+          <h2 class="card-title text-base">필터</h2>
+
+          <label class="form-control mt-2">
+            <span class="label-text text-sm">카테고리</span>
+            <select name="category" class="select select-bordered select-sm">
+              <option value="">전체</option>
+              {% for cat in categories %}
+                <option value="{{ cat.short_name }}"
+                        {% if cat.short_name == selected_category %}selected{% endif %}>
+                  {{ cat.short_name }} — {{ cat.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </label>
+
+          <div class="form-control mt-2">
+            <span class="label-text text-sm">연도 범위</span>
+            <div class="flex gap-2 mt-1">
+              <select name="year_from" class="select select-bordered select-sm flex-1" aria-label="연도 시작">
+                <option value="">최저</option>
+                {% for y in years %}
+                  <option value="{{ y }}" {% if year_from == y|stringformat:"s" %}selected{% endif %}>
+                    {{ y }}
+                  </option>
+                {% endfor %}
+              </select>
+              <span class="self-center text-xs opacity-60">~</span>
+              <select name="year_to" class="select select-bordered select-sm flex-1" aria-label="연도 끝">
+                <option value="">최고</option>
+                {% for y in years %}
+                  <option value="{{ y }}" {% if year_to == y|stringformat:"s" %}selected{% endif %}>
+                    {{ y }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary btn-sm flex-1">적용</button>
+            {% if is_filtered %}
+              <a href="{% url 'problemsets:list' %}" class="btn btn-ghost btn-sm">초기화</a>
+            {% endif %}
+          </div>
+        </div>
+      </form>
+    </aside>
+
+    {# --- Tree list --- #}
+    <section class="card bg-base-100 shadow">
+      <div class="card-body p-0">
+        {% if rows %}
+          <ul class="divide-y divide-base-200">
+            {% for row in rows %}
+              <li class="px-4 py-2.5 hover:bg-base-200/50 transition-colors"
+                  style="padding-left: calc(1rem + {{ row.node.depth|add:"-1" }} * 1.25rem);">
+                <div class="flex items-center justify-between gap-4">
+                  <a href="{% url 'problemsets:detail' pk=row.node.pk %}"
+                     class="min-w-0 flex-1">
+                    <div class="font-medium truncate">
+                      {% if not row.node.is_leaf %}<span class="opacity-40">📁</span>{% else %}<span class="opacity-40">📄</span>{% endif %}
+                      {{ row.node.title }}
+                    </div>
+                    <div class="text-xs opacity-60 mt-0.5">
+                      {% for cat in row.node.categories.all %}<span class="badge badge-ghost badge-xs mr-1">{{ cat.short_name }}</span>{% endfor %}{% if row.node.year %}{% if row.node.categories.exists %} · {% endif %}{{ row.node.year }}{% endif %}{% if not row.node.is_leaf %} · 자식 {{ row.node.numchild }}개{% endif %}
+                    </div>
+                  </a>
+                  {% if user.is_authenticated %}
+                    <div class="shrink-0">
+                      {% include "solving/_completion_counter.html" with problem_set=row.node solved_count=row.solved total_count=row.total %}
+                    </div>
+                  {% endif %}
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="p-8 text-center opacity-60 text-sm">
+            {% if is_filtered %}
+              조건에 맞는 set이 없습니다.
+            {% else %}
+              아직 등록된 set이 없습니다. admin에서 추가해 주세요.
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+    </section>
+
+  </div>
+{% endblock %}
