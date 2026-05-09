@@ -1,4 +1,4 @@
-"""Custom allauth forms."""
+"""Custom allauth forms + profile-edit form."""
 
 from __future__ import annotations
 
@@ -6,6 +6,42 @@ from allauth.socialaccount.forms import SignupForm as SocialSignupForm
 from django import forms
 
 from .models import User
+
+
+class ProfileEditForm(forms.ModelForm):
+    """The user editing their own profile (마이페이지). Spec §4.6.1.
+
+    Email is intentionally read-only — it's the OAuth-verified address; users
+    don't get to change it through this form.
+    """
+
+    class Meta:
+        model = User
+        fields = (
+            "nickname",
+            "profile_visibility",
+            "boj_handle",
+            "codeforces_handle",
+            "atcoder_handle",
+        )
+        widgets = {
+            "nickname": forms.TextInput(attrs={"class": "input input-bordered w-full"}),
+            "profile_visibility": forms.Select(attrs={"class": "select select-bordered w-full"}),
+            "boj_handle": forms.TextInput(attrs={"class": "input input-bordered w-full"}),
+            "codeforces_handle": forms.TextInput(attrs={"class": "input input-bordered w-full"}),
+            "atcoder_handle": forms.TextInput(attrs={"class": "input input-bordered w-full"}),
+        }
+
+    def clean_nickname(self) -> str:
+        nickname = (self.cleaned_data.get("nickname") or "").strip()
+        if not nickname:
+            raise forms.ValidationError("닉네임을 입력하세요.")
+        qs = User.objects.filter(nickname__iexact=nickname)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError("이미 사용 중인 닉네임입니다.")
+        return nickname
 
 
 class CustomSocialSignupForm(SocialSignupForm):

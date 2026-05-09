@@ -47,7 +47,8 @@
     </div>
     <div class="flex-none gap-2">
       {% if user.is_authenticated %}
-        <span class="text-sm">{{ user.nickname }}</span>
+        <a href="{% url 'accounts:profile' nickname=user.nickname %}"
+           class="text-sm link link-hover">{{ user.nickname }}</a>
         <a href="{% url 'accounts:me' %}" class="btn btn-ghost btn-sm">마이페이지</a>
         <form method="post" action="{% url 'account_logout' %}" class="inline">
           {% csrf_token %}

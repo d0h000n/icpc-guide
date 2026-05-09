@@ -49,7 +49,8 @@ has_rating (bool). HTMX swaps this whole section on any comment action.
         {% for c in comments %}
           <li class="py-3">
             <div class="flex items-baseline justify-between gap-2">
-              <span class="font-medium text-sm">{{ c.rating.user.nickname }}</span>
+              <a href="{% url 'accounts:profile' nickname=c.rating.user.nickname %}"
+                 class="font-medium text-sm link link-hover">{{ c.rating.user.nickname }}</a>
               <span class="text-xs opacity-50" title="{{ c.updated_at|date:'Y-m-d H:i' }}">
                 {{ c.updated_at|date:"Y-m-d" }}
               </span>

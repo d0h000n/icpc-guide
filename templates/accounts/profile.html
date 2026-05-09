@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}{{ profile_user.nickname }} · 프로필{% endblock %}
+
+{% block content %}
+  <div class="card bg-base-100 shadow max-w-2xl mx-auto">
+    <div class="card-body">
+
+      <div class="flex items-baseline justify-between gap-2">
+        <h1 class="card-title text-2xl">{{ profile_user.nickname }}</h1>
+        {% if is_owner %}
+          <a href="{% url 'accounts:me' %}" class="btn btn-ghost btn-sm">편집</a>
+        {% endif %}
+      </div>
+
+      {% if not show_full %}
+        <p class="text-sm opacity-60 mt-3">
+          이 사용자의 프로필은 비공개입니다. 닉네임만 노출됩니다.
+        </p>
+      {% else %}
+        <div class="flex flex-wrap gap-2 mt-2 text-sm">
+          {% if profile_user.boj_handle %}
+            <span class="badge badge-outline">BOJ: {{ profile_user.boj_handle }}</span>
+          {% endif %}
+          {% if profile_user.codeforces_handle %}
+            <span class="badge badge-outline">CF: {{ profile_user.codeforces_handle }}</span>
+          {% endif %}
+          {% if profile_user.atcoder_handle %}
+            <span class="badge badge-outline">AtCoder: {{ profile_user.atcoder_handle }}</span>
+          {% endif %}
+          {% if not profile_user.boj_handle and not profile_user.codeforces_handle and not profile_user.atcoder_handle %}
+            <span class="text-xs opacity-50">외부 핸들 미등록</span>
+          {% endif %}
+        </div>
+
+        <dl class="grid grid-cols-3 gap-y-2 mt-6 text-sm">
+          <dt class="opacity-60">푼 문제</dt>
+          <dd class="font-mono col-span-2">{{ stats.solved_count }}</dd>
+          <dt class="opacity-60">남긴 별점</dt>
+          <dd class="font-mono col-span-2">{{ stats.rating_count }}</dd>
+          <dt class="opacity-60">남긴 코멘트</dt>
+          <dd class="font-mono col-span-2">{{ stats.comment_count }}</dd>
+        </dl>
+
+        {% if stats.solved_set_titles %}
+          <h2 class="text-sm font-medium mt-6">푼 set</h2>
+          <ul class="text-sm opacity-80 list-disc list-inside mt-1">
+            {% for title in stats.solved_set_titles %}
+              <li>{{ title }}</li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-sm opacity-60 mt-6">아직 푼 set이 없습니다.</p>
+        {% endif %}
+      {% endif %}
+
+    </div>
+  </div>
+{% endblock %}

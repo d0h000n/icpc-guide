@@ -17,7 +17,8 @@ range iterators (computed in the view).
       <ul class="divide-y divide-base-200 mt-3 max-h-96 overflow-y-auto">
         {% for r in ratings %}
           <li class="py-2 flex items-center justify-between gap-3">
-            <span class="text-sm truncate">{{ r.user.nickname }}</span>
+            <a href="{% url 'accounts:profile' nickname=r.user.nickname %}"
+               class="text-sm truncate link link-hover">{{ r.user.nickname }}</a>
             <span class="font-mono text-sm whitespace-nowrap">
               {% for _ in r.stars_filled %}<span class="text-warning">★</span>{% endfor %}{% for _ in r.stars_empty %}<span class="opacity-20">★</span>{% endfor %}
             </span>

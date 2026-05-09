@@ -1,17 +1,92 @@
 {% extends "base.html" %}
 
-{% block title %}마이페이지{% endblock %}
+{% block title %}마이페이지 · Problem Set Tracker{% endblock %}
 
 {% block content %}
-  <div class="card bg-base-100 shadow max-w-xl mx-auto">
-    <div class="card-body">
-      <h2 class="card-title">마이페이지</h2>
-      <dl class="grid grid-cols-[120px_1fr] gap-y-2 mt-4 text-sm">
-        <dt class="opacity-60">닉네임</dt><dd>{{ user.nickname }}</dd>
-        <dt class="opacity-60">이메일</dt><dd>{{ user.email }}</dd>
-        <dt class="opacity-60">가시성</dt><dd>{{ user.get_profile_visibility_display }}</dd>
-      </dl>
-      <p class="text-xs opacity-50 mt-4">프로필 편집은 이후 단계에서 구현됩니다.</p>
-    </div>
+  <div class="grid gap-6 md:grid-cols-[1fr_280px]">
+
+    {# --- Edit form --- #}
+    <section class="card bg-base-100 shadow">
+      <div class="card-body">
+        <h1 class="card-title">프로필 편집</h1>
+
+        <form method="post" class="flex flex-col gap-3 mt-2">
+          {% csrf_token %}
+
+          <div class="form-control">
+            <span class="label-text text-sm">닉네임</span>
+            {{ form.nickname }}
+            {% for err in form.nickname.errors %}
+              <span class="label-text-alt text-error mt-1">{{ err }}</span>
+            {% endfor %}
+          </div>
+
+          <div class="form-control">
+            <span class="label-text text-sm">이메일 (OAuth 검증값, 변경 불가)</span>
+            <input type="email" value="{{ user.email }}" readonly disabled
+                   class="input input-bordered w-full opacity-60">
+          </div>
+
+          <div class="form-control">
+            <span class="label-text text-sm">프로필 가시성</span>
+            {{ form.profile_visibility }}
+            <span class="label-text-alt opacity-60 mt-1">
+              private이면 본인만 풀이 통계를 볼 수 있고, 다른 사용자에겐 닉네임만 노출됩니다.
+              팀원에겐 가시성과 무관하게 보입니다(팀 컨텍스트).
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="form-control">
+              <span class="label-text text-sm">BOJ 핸들</span>
+              {{ form.boj_handle }}
+            </div>
+            <div class="form-control">
+              <span class="label-text text-sm">Codeforces 핸들</span>
+              {{ form.codeforces_handle }}
+            </div>
+            <div class="form-control">
+              <span class="label-text text-sm">AtCoder 핸들</span>
+              {{ form.atcoder_handle }}
+            </div>
+          </div>
+
+          {% if form.non_field_errors %}
+            <div class="alert alert-error">{{ form.non_field_errors }}</div>
+          {% endif %}
+
+          <div class="flex justify-end gap-2 mt-2">
+            <a href="{% url 'accounts:profile' nickname=user.nickname %}"
+               class="btn btn-ghost btn-sm">공개 프로필 보기</a>
+            <button type="submit" class="btn btn-primary btn-sm">저장</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    {# --- Stats sidebar --- #}
+    <aside class="card bg-base-100 shadow">
+      <div class="card-body">
+        <h2 class="card-title text-base">내 활동</h2>
+        <dl class="grid grid-cols-2 gap-y-2 mt-2 text-sm">
+          <dt class="opacity-60">푼 문제</dt>
+          <dd class="font-mono text-right">{{ stats.solved_count }}</dd>
+          <dt class="opacity-60">남긴 별점</dt>
+          <dd class="font-mono text-right">{{ stats.rating_count }}</dd>
+          <dt class="opacity-60">남긴 코멘트</dt>
+          <dd class="font-mono text-right">{{ stats.comment_count }}</dd>
+        </dl>
+
+        {% if stats.solved_set_titles %}
+          <h3 class="text-sm font-medium mt-4">푼 set</h3>
+          <ul class="text-xs opacity-80 list-disc list-inside mt-1">
+            {% for title in stats.solved_set_titles %}
+              <li class="truncate">{{ title }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </div>
+    </aside>
+
   </div>
 {% endblock %}

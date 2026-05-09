@@ -30,6 +30,7 @@ db.sqlite3-journal
 .vscode/
 .idea/
 *.swp
+.claude/
 
 # Testing
 .pytest_cache/
