@@ -58,8 +58,10 @@
     </aside>
 
     {# --- Tree list --- #}
-    {# `tree-changed` event (dispatched by the toggle endpoint via HX-Trigger)
-       refreshes only this wrapper, preserving the URL's GET filters. #}
+    {% comment %}
+    `tree-changed` event (dispatched by the toggle endpoint via HX-Trigger)
+    refreshes only this wrapper, preserving the URL's GET filters.
+    {% endcomment %}
     <section id="set-tree" class="card bg-base-100 shadow"
              hx-get="{{ request.get_full_path }}"
              hx-trigger="tree-changed from:body"
