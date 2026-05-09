@@ -10,6 +10,7 @@ from apps.categories.models import Category
 from apps.problemsets.models import Problem, ProblemAppearance, ProblemSet
 from apps.ratings.models import Comment, Rating
 from apps.solving.models import SolveRecord
+from apps.teams.models import Team, TeamInvite, TeamMember, TeamMemberRole
 
 
 class UserFactory(DjangoModelFactory):
@@ -103,3 +104,40 @@ class CommentFactory(DjangoModelFactory):
 
     rating = factory.SubFactory(RatingFactory)
     body = factory.Sequence(lambda n: f"Comment body {n}")
+
+
+class TeamFactory(DjangoModelFactory):
+    """Creates a Team and auto-adds the owner as a TeamMember(owner)."""
+
+    class Meta:
+        model = Team
+
+    name = factory.Sequence(lambda n: f"Team {n}")
+    slug = factory.Sequence(lambda n: f"team-{n}")
+    owner = factory.SubFactory(UserFactory)
+
+    @factory.post_generation
+    def with_owner_membership(obj, create, extracted, **kwargs):
+        if create:
+            TeamMember.objects.get_or_create(
+                team=obj,
+                user=obj.owner,
+                defaults={"role": TeamMemberRole.OWNER},
+            )
+
+
+class TeamMemberFactory(DjangoModelFactory):
+    class Meta:
+        model = TeamMember
+
+    team = factory.SubFactory(TeamFactory)
+    user = factory.SubFactory(UserFactory)
+    role = TeamMemberRole.MEMBER
+
+
+class TeamInviteFactory(DjangoModelFactory):
+    class Meta:
+        model = TeamInvite
+
+    team = factory.SubFactory(TeamFactory)
+    invited_by = factory.SelfAttribute("team.owner")
