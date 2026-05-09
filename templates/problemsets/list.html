@@ -58,7 +58,14 @@
     </aside>
 
     {# --- Tree list --- #}
-    <section class="card bg-base-100 shadow">
+    {# `tree-changed` event (dispatched by the toggle endpoint via HX-Trigger)
+       refreshes only this wrapper, preserving the URL's GET filters. #}
+    <section id="set-tree" class="card bg-base-100 shadow"
+             hx-get="{{ request.get_full_path }}"
+             hx-trigger="tree-changed from:body"
+             hx-target="this"
+             hx-swap="outerHTML"
+             hx-select="#set-tree">
       <div class="card-body p-0">
         {% if rows %}
           <ul class="divide-y divide-base-200">
@@ -66,16 +73,30 @@
               <li class="px-4 py-2.5 hover:bg-base-200/50 transition-colors"
                   style="padding-left: calc(1rem + {{ row.node.depth|add:"-1" }} * 1.25rem);">
                 <div class="flex items-center justify-between gap-4">
-                  <a href="{% url 'problemsets:detail' pk=row.node.pk %}"
-                     class="min-w-0 flex-1">
-                    <div class="font-medium truncate">
-                      {% if not row.node.is_leaf %}<span class="opacity-40">📁</span>{% else %}<span class="opacity-40">📄</span>{% endif %}
-                      {{ row.node.title }}
-                    </div>
-                    <div class="text-xs opacity-60 mt-0.5">
-                      {% for cat in row.node.categories.all %}<span class="badge badge-ghost badge-xs mr-1">{{ cat.short_name }}</span>{% endfor %}{% if row.node.year %}{% if row.node.categories.exists %} · {% endif %}{{ row.node.year }}{% endif %}{% if not row.node.is_leaf %} · 자식 {{ row.node.numchild }}개{% endif %}
-                    </div>
-                  </a>
+                  <div class="flex items-center gap-2 min-w-0 flex-1">
+                    {% if user.is_authenticated and not row.node.is_leaf %}
+                      <button type="button"
+                              hx-post="{% url 'problemsets:toggle_collapse' pk=row.node.pk %}"
+                              hx-swap="none"
+                              class="btn btn-ghost btn-xs px-1 shrink-0"
+                              aria-label="{% if row.is_collapsed %}펼치기{% else %}접기{% endif %}"
+                              title="{% if row.is_collapsed %}펼치기{% else %}접기{% endif %}">
+                        {% if row.is_collapsed %}▶{% else %}▼{% endif %}
+                      </button>
+                    {% else %}
+                      <span class="inline-block w-6 shrink-0"></span>
+                    {% endif %}
+                    <a href="{% url 'problemsets:detail' pk=row.node.pk %}"
+                       class="min-w-0 flex-1">
+                      <div class="font-medium truncate">
+                        {% if not row.node.is_leaf %}<span class="opacity-40">📁</span>{% else %}<span class="opacity-40">📄</span>{% endif %}
+                        {{ row.node.title }}
+                      </div>
+                      <div class="text-xs opacity-60 mt-0.5">
+                        {% for cat in row.node.categories.all %}<span class="badge badge-ghost badge-xs mr-1">{{ cat.short_name }}</span>{% endfor %}{% if row.node.year %}{% if row.node.categories.exists %} · {% endif %}{{ row.node.year }}{% endif %}{% if not row.node.is_leaf %} · 자식 {{ row.node.numchild }}개{% endif %}
+                      </div>
+                    </a>
+                  </div>
                   {% if user.is_authenticated %}
                     <div class="shrink-0">
                       {% include "solving/_completion_counter.html" with problem_set=row.node solved_count=row.solved total_count=row.total %}

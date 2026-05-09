@@ -109,6 +109,41 @@ class CategoryMembership(models.Model):
                 )
 
 
+class CollapsedNode(models.Model):
+    """A user's per-account "I've collapsed this node in the tree view" preference.
+
+    Default behavior is everything-expanded; entries here mean the user clicked
+    to collapse this ProblemSet, so its descendants should be hidden until they
+    expand it again. Persists across sessions/devices (account-bound).
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="collapsed_nodes",
+    )
+    problem_set = models.ForeignKey(
+        ProblemSet,
+        on_delete=models.CASCADE,
+        related_name="collapsed_by",
+    )
+    collapsed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "problem_set"],
+                name="unique_user_collapsed_node",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["user"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.user} collapsed {self.problem_set}"
+
+
 @receiver(m2m_changed, sender=ProblemSet.categories.through)
 def _validate_category_membership_on_add(sender, instance, action, pk_set, **kwargs):
     """Apply CategoryMembership.clean() when callers use .categories.add()."""

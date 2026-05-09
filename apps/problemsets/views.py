@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+from django.contrib.auth.decorators import login_required
 from django.db.models import Exists, OuterRef, Q
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.cache import never_cache
-from django.views.decorators.http import require_safe
+from django.views.decorators.http import require_POST, require_safe
 
 from apps.categories.models import Category
 from apps.ratings.models import Comment, Rating
@@ -15,7 +16,7 @@ from apps.ratings.services import my_rating as my_rating_for
 from apps.solving.models import SolveRecord
 from apps.solving.services import completion_for
 
-from .models import ProblemSet
+from .models import CollapsedNode, ProblemSet
 
 
 @never_cache
@@ -56,10 +57,35 @@ def problem_set_list(request: HttpRequest) -> HttpResponse:
     )
 
     problem_sets = list(qs)
+
+    # Per-user tree collapse: hide a node if any of its ancestors is collapsed.
+    collapsed_pks: set[int] = set()
+    collapsed_paths: list[str] = []
+    if request.user.is_authenticated:
+        collapsed_qs = CollapsedNode.objects.filter(user=request.user).select_related("problem_set")
+        collapsed_paths = [c.problem_set.path for c in collapsed_qs]
+        collapsed_pks = {c.problem_set_id for c in collapsed_qs}
+
+    def _is_hidden(ps: ProblemSet) -> bool:
+        for cpath in collapsed_paths:
+            # ps is hidden iff one of its ancestors (strict prefix) is collapsed.
+            if ps.path != cpath and ps.path.startswith(cpath):
+                return True
+        return False
+
     rows = []
     for ps in problem_sets:
+        if _is_hidden(ps):
+            continue
         s, t = completion_for(ps, request.user)
-        rows.append({"node": ps, "solved": s, "total": t})
+        rows.append(
+            {
+                "node": ps,
+                "solved": s,
+                "total": t,
+                "is_collapsed": ps.pk in collapsed_pks,
+            }
+        )
 
     return render(
         request,
@@ -74,6 +100,22 @@ def problem_set_list(request: HttpRequest) -> HttpResponse:
             "is_filtered": bool(selected_category or year_from or year_to),
         },
     )
+
+
+@never_cache
+@login_required
+@require_POST
+def toggle_collapse(request: HttpRequest, pk: int) -> HttpResponse:
+    """Flip the current user's "this node is collapsed in tree view" state."""
+    pset = get_object_or_404(ProblemSet, pk=pk)
+    obj, created = CollapsedNode.objects.get_or_create(user=request.user, problem_set=pset)
+    if not created:
+        obj.delete()
+    # Empty body + HX-Trigger so the tree wrapper refreshes itself with the
+    # current GET filters preserved (see #set-tree's hx-get / hx-trigger).
+    response = HttpResponse(status=204)
+    response["HX-Trigger"] = "tree-changed"
+    return response
 
 
 @never_cache

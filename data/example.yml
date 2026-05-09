@@ -78,12 +78,20 @@ problem_sets:
     external_url: https://oj.uz/problems/source/ioi
     categories:
     - oi
+    children:
+    - title: IOI 2025
+    - title: IOI 2024
+    - title: IOI 2023
+    - title: IOI 2022
+    - title: IOI 2021
   - title: Korean Olympiad in Informatics
+    categories:
+    - oi
     children:
       - title: Korean Team Selection Contest
         children:
         - title: 2025년 선발고사
-        
+
       - title: KOI
         children:
         - title: KOI 1차 대회
@@ -94,5 +102,7 @@ problem_sets:
           - title: KOI 2023 2차 대회
           - title: KOI 2022 2차 대회
   - title: Japanese Olympiad in Informatics
+    categories:
+    - oi
     children:
-    - title: JOI 
+    - title: JOI Spring Camp
