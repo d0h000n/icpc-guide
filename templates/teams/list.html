@@ -16,7 +16,8 @@
       {% if my_teams %}
         <div class="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {% for team in my_teams %}
-            <article class="card bg-base-100 shadow">
+            <a href="{% url 'teams:detail' slug=team.slug %}"
+               class="card bg-base-100 shadow hover:shadow-md transition-shadow">
               <div class="card-body p-4">
                 <div class="flex items-baseline justify-between gap-2">
                   <h3 class="font-medium truncate">{{ team.name }}</h3>
@@ -30,7 +31,7 @@
                   <p class="text-sm opacity-75 mt-1 line-clamp-2">{{ team.description }}</p>
                 {% endif %}
               </div>
-            </article>
+            </a>
           {% endfor %}
         </div>
       {% else %}
@@ -50,7 +51,8 @@
     {% if public_teams %}
       <div class="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
         {% for team in public_teams %}
-          <article class="card bg-base-100 shadow">
+          <a href="{% url 'teams:detail' slug=team.slug %}"
+             class="card bg-base-100 shadow hover:shadow-md transition-shadow">
             <div class="card-body p-4">
               <h3 class="font-medium truncate">{{ team.name }}</h3>
               <p class="text-xs opacity-60 mt-1">멤버 {{ team.memberships.count }}명</p>
@@ -58,7 +60,7 @@
                 <p class="text-sm opacity-75 mt-1 line-clamp-2">{{ team.description }}</p>
               {% endif %}
             </div>
-          </article>
+          </a>
         {% endfor %}
       </div>
     {% else %}

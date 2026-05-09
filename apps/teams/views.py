@@ -5,8 +5,8 @@ from __future__ import annotations
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.http import HttpRequest, HttpResponse
-from django.shortcuts import redirect, render
+from django.http import Http404, HttpRequest, HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.cache import never_cache
 
@@ -18,6 +18,12 @@ def _is_member(user, team: Team) -> bool:
     if not user.is_authenticated:
         return False
     return team.memberships.filter(user=user).exists()
+
+
+def _is_owner(user, team: Team) -> bool:
+    if not user.is_authenticated:
+        return False
+    return team.owner_id == user.pk
 
 
 @never_cache
@@ -53,9 +59,34 @@ def team_create(request: HttpRequest) -> HttpResponse:
                 team.save()
                 TeamMember.objects.create(team=team, user=request.user, role=TeamMemberRole.OWNER)
             messages.success(request, "팀이 생성됐습니다.")
-            # Detail page arrives in 6.3; until then, kick back to list.
-            return redirect(reverse("teams:list"))
+            return redirect(reverse("teams:detail", args=[team.slug]))
     else:
         form = TeamCreateForm()
 
     return render(request, "teams/create.html", {"form": form})
+
+
+@never_cache
+def team_detail(request: HttpRequest, slug: str) -> HttpResponse:
+    """S6 — team detail. Spec §4.6.2/3:
+    - public: anyone may view.
+    - private: members only; non-members get 404 (existence not leaked).
+    """
+    team = get_object_or_404(Team.objects.select_related("owner"), slug=slug)
+    is_member = _is_member(request.user, team)
+    is_owner = _is_owner(request.user, team)
+    if team.visibility == TeamVisibility.PRIVATE and not is_member:
+        raise Http404("Team not found")
+
+    members = list(team.memberships.select_related("user").order_by("-role", "joined_at"))
+
+    return render(
+        request,
+        "teams/detail.html",
+        {
+            "team": team,
+            "members": members,
+            "is_member": is_member,
+            "is_owner": is_owner,
+        },
+    )
