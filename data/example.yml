@@ -13,6 +13,9 @@ categories:
   name: Olympiad in Informatics
   description: 최고의 대회
   url: https://qoj.ac/category/3
+- short_name: icpc
+  name: International Collegiate Programming Contest
+  description: 최고의 대회
 problem_sets:
 - title: ICPC
   child:

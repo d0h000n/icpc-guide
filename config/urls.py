@@ -13,6 +13,7 @@ urlpatterns = [
     path("categories/", include("apps.categories.urls")),
     path("solve/", include("apps.solving.urls")),
     path("ratings/", include("apps.ratings.urls")),
+    path("teams/", include("apps.teams.urls")),
     path("", home, name="home"),
     path("", include("apps.accounts.urls")),
 ]

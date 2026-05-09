@@ -44,6 +44,7 @@
       <a href="{% url 'home' %}" class="btn btn-ghost text-xl">PS Tracker</a>
       <a href="{% url 'problemsets:list' %}" class="btn btn-ghost btn-sm">출처</a>
       <a href="{% url 'categories:list' %}" class="btn btn-ghost btn-sm">둘러보기</a>
+      <a href="{% url 'teams:list' %}" class="btn btn-ghost btn-sm">팀</a>
     </div>
     <div class="flex-none gap-2">
       {% if user.is_authenticated %}

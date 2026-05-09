@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}팀 · Problem Set Tracker{% endblock %}
+
+{% block content %}
+  <div class="flex items-baseline justify-between mb-4">
+    <h1 class="text-2xl font-bold">팀</h1>
+    {% if user.is_authenticated %}
+      <a href="{% url 'teams:create' %}" class="btn btn-primary btn-sm">+ 새 팀</a>
+    {% endif %}
+  </div>
+
+  {% if user.is_authenticated %}
+    <section class="mb-8">
+      <h2 class="text-lg font-medium mb-2">내 팀</h2>
+      {% if my_teams %}
+        <div class="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+          {% for team in my_teams %}
+            <article class="card bg-base-100 shadow">
+              <div class="card-body p-4">
+                <div class="flex items-baseline justify-between gap-2">
+                  <h3 class="font-medium truncate">{{ team.name }}</h3>
+                  <span class="badge badge-sm
+                    {% if team.visibility == 'public' %}badge-info{% else %}badge-ghost{% endif %}">
+                    {{ team.get_visibility_display }}
+                  </span>
+                </div>
+                <p class="text-xs opacity-60 mt-1">멤버 {{ team.memberships.count }}명 · owner {{ team.owner.nickname }}</p>
+                {% if team.description %}
+                  <p class="text-sm opacity-75 mt-1 line-clamp-2">{{ team.description }}</p>
+                {% endif %}
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="card bg-base-100 shadow">
+          <div class="card-body text-center py-8 text-sm opacity-60">
+            아직 속한 팀이 없습니다.
+            <a href="{% url 'teams:create' %}" class="link ml-1">새 팀을 만들거나</a>
+            초대 링크를 받아 가입하세요.
+          </div>
+        </div>
+      {% endif %}
+    </section>
+  {% endif %}
+
+  <section>
+    <h2 class="text-lg font-medium mb-2">공개 팀 둘러보기</h2>
+    {% if public_teams %}
+      <div class="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+        {% for team in public_teams %}
+          <article class="card bg-base-100 shadow">
+            <div class="card-body p-4">
+              <h3 class="font-medium truncate">{{ team.name }}</h3>
+              <p class="text-xs opacity-60 mt-1">멤버 {{ team.memberships.count }}명</p>
+              {% if team.description %}
+                <p class="text-sm opacity-75 mt-1 line-clamp-2">{{ team.description }}</p>
+              {% endif %}
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="card bg-base-100 shadow">
+        <div class="card-body text-center py-8 text-sm opacity-60">
+          공개 팀이 없습니다.
+        </div>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}
