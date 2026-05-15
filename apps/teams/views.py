@@ -4,13 +4,15 @@ from __future__ import annotations
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.cache import never_cache
+from django.views.decorators.http import require_POST
 
-from .forms import TeamCreateForm
+from .forms import TeamCreateForm, TeamEditForm
 from .models import Team, TeamMember, TeamMemberRole, TeamVisibility
 
 
@@ -90,3 +92,92 @@ def team_detail(request: HttpRequest, slug: str) -> HttpResponse:
             "is_owner": is_owner,
         },
     )
+
+
+def _require_owner(user, team: Team) -> None:
+    if not _is_owner(user, team):
+        raise PermissionDenied("Only the team owner can do this.")
+
+
+@never_cache
+@login_required
+def team_edit(request: HttpRequest, slug: str) -> HttpResponse:
+    """Owner-only metadata edit. Spec §4.4.1."""
+    team = get_object_or_404(Team, slug=slug)
+    _require_owner(request.user, team)
+    if request.method == "POST":
+        form = TeamEditForm(request.POST, instance=team)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "팀 정보가 저장됐습니다.")
+            return redirect(reverse("teams:detail", args=[team.slug]))
+    else:
+        form = TeamEditForm(instance=team)
+    return render(request, "teams/edit.html", {"team": team, "form": form})
+
+
+@never_cache
+@login_required
+@require_POST
+def member_remove(request: HttpRequest, slug: str, member_id: int) -> HttpResponse:
+    """Owner removes a non-owner member. Spec §4.4.1."""
+    team = get_object_or_404(Team, slug=slug)
+    _require_owner(request.user, team)
+    member = get_object_or_404(TeamMember, team=team, pk=member_id)
+    if member.user_id == team.owner_id:
+        messages.error(request, "owner는 직접 제거할 수 없습니다. owner 양도 후 진행하세요.")
+        return redirect(reverse("teams:detail", args=[team.slug]))
+    member.delete()
+    messages.success(request, f"{member.user.nickname} 멤버를 제거했습니다.")
+    return redirect(reverse("teams:detail", args=[team.slug]))
+
+
+@never_cache
+@login_required
+@require_POST
+def transfer_ownership(request: HttpRequest, slug: str) -> HttpResponse:
+    """Owner hands the team over to another existing member. Spec §4.4.1."""
+    team = get_object_or_404(Team, slug=slug)
+    _require_owner(request.user, team)
+
+    new_owner_member_id = request.POST.get("new_owner_member_id", "").strip()
+    if not new_owner_member_id.isdigit():
+        messages.error(request, "양도할 멤버를 선택하세요.")
+        return redirect(reverse("teams:detail", args=[team.slug]))
+
+    new_membership = get_object_or_404(TeamMember, team=team, pk=int(new_owner_member_id))
+    if new_membership.user_id == team.owner_id:
+        messages.error(request, "이미 owner인 멤버입니다.")
+        return redirect(reverse("teams:detail", args=[team.slug]))
+
+    with transaction.atomic():
+        old_membership = TeamMember.objects.get(team=team, user=team.owner)
+        old_membership.role = TeamMemberRole.MEMBER
+        old_membership.save(update_fields=["role"])
+
+        new_membership.role = TeamMemberRole.OWNER
+        new_membership.save(update_fields=["role"])
+
+        team.owner = new_membership.user
+        team.save(update_fields=["owner", "updated_at"])
+
+    messages.success(request, f"owner를 {new_membership.user.nickname}에게 양도했습니다.")
+    return redirect(reverse("teams:detail", args=[team.slug]))
+
+
+@never_cache
+@login_required
+@require_POST
+def leave_team(request: HttpRequest, slug: str) -> HttpResponse:
+    """Member voluntarily leaves the team. Owner must transfer first."""
+    team = get_object_or_404(Team, slug=slug)
+    if _is_owner(request.user, team):
+        messages.error(request, "owner는 먼저 다른 멤버에게 양도한 뒤 탈퇴할 수 있습니다.")
+        return redirect(reverse("teams:detail", args=[team.slug]))
+
+    membership = TeamMember.objects.filter(team=team, user=request.user).first()
+    if membership is None:
+        raise Http404("not a member")
+    membership.delete()
+    messages.success(request, f"'{team.name}' 팀에서 탈퇴했습니다.")
+    return redirect(reverse("teams:list"))

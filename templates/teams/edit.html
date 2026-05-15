@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}{{ team.name }} 편집 · 팀{% endblock %}
+
+{% block content %}
+  <div class="card bg-base-100 shadow max-w-xl mx-auto">
+    <div class="card-body">
+      <h1 class="card-title">팀 정보 편집</h1>
+
+      <form method="post" class="flex flex-col gap-3 mt-2">
+        {% csrf_token %}
+
+        <div class="form-control">
+          <span class="label-text text-sm">팀 이름</span>
+          {{ form.name }}
+          {% for err in form.name.errors %}
+            <span class="label-text-alt text-error mt-1">{{ err }}</span>
+          {% endfor %}
+        </div>
+
+        <div class="form-control">
+          <span class="label-text text-sm">슬러그</span>
+          {{ form.slug }}
+          {% for err in form.slug.errors %}
+            <span class="label-text-alt text-error mt-1">{{ err }}</span>
+          {% endfor %}
+        </div>
+
+        <div class="form-control">
+          <span class="label-text text-sm">설명</span>
+          {{ form.description }}
+        </div>
+
+        <div class="form-control">
+          <span class="label-text text-sm">공개 범위</span>
+          {{ form.visibility }}
+        </div>
+
+        {% if form.non_field_errors %}
+          <div class="alert alert-error">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="flex justify-end gap-2 mt-2">
+          <a href="{% url 'teams:detail' slug=team.slug %}" class="btn btn-ghost btn-sm">취소</a>
+          <button type="submit" class="btn btn-primary btn-sm">저장</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

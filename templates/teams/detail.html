@@ -8,9 +8,15 @@
       <div class="card-body">
         <div class="flex items-baseline justify-between gap-2 flex-wrap">
           <h1 class="card-title text-2xl">{{ team.name }}</h1>
-          <span class="badge {% if team.visibility == 'public' %}badge-info{% else %}badge-ghost{% endif %}">
-            {{ team.get_visibility_display }}
-          </span>
+          <div class="flex gap-2 items-center">
+            <span class="badge {% if team.visibility == 'public' %}badge-info{% else %}badge-ghost{% endif %}">
+              {{ team.get_visibility_display }}
+            </span>
+            {% if is_owner %}
+              <a href="{% url 'teams:edit' slug=team.slug %}"
+                 class="btn btn-ghost btn-xs">편집</a>
+            {% endif %}
+          </div>
         </div>
         <p class="text-xs opacity-60">slug: <span class="font-mono">{{ team.slug }}</span></p>
 
@@ -23,28 +29,43 @@
           <a href="{% url 'accounts:profile' nickname=team.owner.nickname %}"
              class="link link-hover">{{ team.owner.nickname }}</a>
         </p>
+
+        {% if is_member and not is_owner %}
+          <form method="post" action="{% url 'teams:leave' slug=team.slug %}"
+                class="mt-3"
+                onsubmit="return confirm('정말 이 팀에서 탈퇴할까요?');">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-ghost btn-sm text-error">팀 탈퇴</button>
+          </form>
+        {% endif %}
       </div>
     </article>
 
     <section class="card bg-base-100 shadow">
       <div class="card-body">
-        <div class="flex items-baseline justify-between">
-          <h2 class="card-title text-lg">멤버 ({{ members|length }} / {{ team.MAX_MEMBERS }})</h2>
-        </div>
+        <h2 class="card-title text-lg">멤버 ({{ members|length }} / {{ team.MAX_MEMBERS }})</h2>
 
         <ul class="divide-y divide-base-200 mt-2">
           {% for m in members %}
             <li class="py-2 flex items-center justify-between gap-3">
-              <a href="{% url 'accounts:profile' nickname=m.user.nickname %}"
-                 class="link link-hover text-sm">{{ m.user.nickname }}</a>
-              <span class="text-xs opacity-60">
+              <div class="flex items-center gap-2">
+                <a href="{% url 'accounts:profile' nickname=m.user.nickname %}"
+                   class="link link-hover text-sm">{{ m.user.nickname }}</a>
                 {% if m.role == 'owner' %}
                   <span class="badge badge-sm badge-warning">owner</span>
-                {% else %}
-                  member
                 {% endif %}
-                · {{ m.joined_at|date:"Y-m-d" }}
-              </span>
+              </div>
+              <div class="flex items-center gap-2 text-xs opacity-60">
+                <span>{{ m.joined_at|date:"Y-m-d" }}</span>
+                {% if is_owner and m.user_id != team.owner_id %}
+                  <form method="post"
+                        action="{% url 'teams:member_remove' slug=team.slug member_id=m.pk %}"
+                        onsubmit="return confirm('{{ m.user.nickname }} 멤버를 제거할까요?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-ghost btn-xs text-error">제거</button>
+                  </form>
+                {% endif %}
+              </div>
             </li>
           {% endfor %}
         </ul>
@@ -53,6 +74,28 @@
           <p class="text-xs opacity-60 mt-4">
             이 팀의 멤버가 아닙니다. owner로부터 초대 링크를 받으면 가입할 수 있습니다.
           </p>
+        {% endif %}
+
+        {% if is_owner and members|length > 1 %}
+          <form method="post"
+                action="{% url 'teams:transfer_ownership' slug=team.slug %}"
+                class="mt-6 pt-4 border-t border-base-200 flex items-end gap-2 flex-wrap"
+                onsubmit="return confirm('owner 권한을 양도하면 본인은 일반 멤버가 됩니다. 진행할까요?');">
+            {% csrf_token %}
+            <div class="form-control flex-1 min-w-[180px]">
+              <span class="label-text text-sm">owner 양도</span>
+              <select name="new_owner_member_id"
+                      class="select select-bordered select-sm" required>
+                <option value="" disabled selected>새 owner 선택</option>
+                {% for m in members %}
+                  {% if m.user_id != team.owner_id %}
+                    <option value="{{ m.pk }}">{{ m.user.nickname }}</option>
+                  {% endif %}
+                {% endfor %}
+              </select>
+            </div>
+            <button type="submit" class="btn btn-warning btn-sm">양도</button>
+          </form>
         {% endif %}
       </div>
     </section>

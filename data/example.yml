@@ -14,8 +14,8 @@ categories:
   description: 최고의 대회
   url: https://qoj.ac/category/3
 - short_name: icpc
-  name: International Collegiate Programming Contest
-  description: 최고의 대회
+  name: ICPC
+  description: International Collegiate Programming Contest
 problem_sets:
 - title: ICPC
   child:
@@ -23,10 +23,12 @@ problem_sets:
     external_url: https://qoj.ac/category/50
     categories:
     - kor
+    - icpc
   - title: Yokohama Regional
     external_url: https://qoj.ac/category/49
     categories:
     - jpn
+    - icpc
     children:
     - title: Yokohama 2022
       year: 2022
