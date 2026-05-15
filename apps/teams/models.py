@@ -5,6 +5,7 @@ from __future__ import annotations
 import secrets
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -36,7 +37,11 @@ class Team(models.Model):
     description = models.TextField(blank=True)
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
+        # DO_NOTHING because the pre_delete signal in apps.TeamsConfig.ready()
+        # transfers ownership before the user is removed. PROTECT would block
+        # the delete before the signal could fire; SET_NULL would clobber the
+        # signal's reassignment after-the-fact.
+        on_delete=models.DO_NOTHING,
         related_name="owned_teams",
     )
     visibility = models.CharField(
@@ -90,6 +95,22 @@ class TeamMember(models.Model):
     def __str__(self) -> str:
         return f"{self.user} @ {self.team} ({self.role})"
 
+    def save(self, *args, **kwargs) -> None:
+        # Only enforce the 50-member cap here — the unique-together constraint
+        # is still surfaced at DB level (IntegrityError), matching the pattern
+        # the other apps in this project use.
+        if not self.pk:
+            self.clean()
+        super().save(*args, **kwargs)
+
+    def clean(self) -> None:
+        super().clean()
+        if self.team_id and not self.pk:
+            # Only enforce on new memberships — existing ones are fine to edit.
+            current = TeamMember.objects.filter(team_id=self.team_id).count()
+            if current >= Team.MAX_MEMBERS:
+                raise ValidationError(f"팀 인원이 {Team.MAX_MEMBERS}명에 도달했습니다 (spec §3.3).")
+
 
 class TeamInvite(models.Model):
     """An invite link with token, optionally bound to a specific invitee."""
@@ -134,3 +155,27 @@ class TeamInvite(models.Model):
 
     def __str__(self) -> str:
         return f"Invite to {self.team} ({self.status})"
+
+
+def transfer_owned_teams_on_user_delete(sender, instance, **kwargs):
+    """Spec §2.4: when a team owner is deleted, hand ownership to the
+    oldest-joined remaining member. Empty teams are deleted.
+
+    Runs in pre_delete on the User model so Team.owner FK PROTECT doesn't fire.
+    Connected in apps.TeamsConfig.ready().
+    """
+    for team in Team.objects.filter(owner=instance):
+        successor = (
+            TeamMember.objects.filter(team=team)
+            .exclude(user=instance)
+            .order_by("joined_at")
+            .first()
+        )
+        if successor is None:
+            team.delete()
+            continue
+        successor.role = TeamMemberRole.OWNER
+        successor.save(update_fields=["role"])
+        team.owner = successor.user
+        team.save(update_fields=["owner", "updated_at"])
+        TeamMember.objects.filter(team=team, user=instance).delete()

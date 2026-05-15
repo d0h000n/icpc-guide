@@ -80,14 +80,32 @@ def test_team_member_cascades_when_user_deleted() -> None:
 
 
 @pytest.mark.django_db
-def test_team_owner_protected_from_user_delete() -> None:
-    """spec §2.4: owner-deletion needs auto-transfer logic; the FK uses PROTECT
-    so naive `user.delete()` on an owner blocks until handled by step 6.6."""
-    from django.db.models.deletion import ProtectedError
+def test_owner_delete_transfers_to_oldest_member() -> None:
+    """spec §2.4: owner deletion → oldest remaining member becomes owner."""
 
     team = TeamFactory()
-    with pytest.raises(ProtectedError):
-        team.owner.delete()
+    second = TeamMemberFactory(team=team)  # joined later
+    third = TeamMemberFactory(team=team)  # joined latest
+
+    team.owner.delete()
+
+    team.refresh_from_db()
+    # second is the oldest non-owner member, so they inherit the role.
+    assert team.owner == second.user
+    second.refresh_from_db()
+    assert second.role == TeamMemberRole.OWNER
+    third.refresh_from_db()
+    assert third.role == TeamMemberRole.MEMBER
+
+
+@pytest.mark.django_db
+def test_owner_delete_drops_team_when_no_other_members() -> None:
+    team = TeamFactory()
+    team_pk = team.pk
+    team.owner.delete()
+    from apps.teams.models import Team
+
+    assert not Team.objects.filter(pk=team_pk).exists()
 
 
 @pytest.mark.django_db
