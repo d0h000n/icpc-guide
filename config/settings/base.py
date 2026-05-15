@@ -52,6 +52,10 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    # Force `Cache-Control: no-store` on every dynamic response. Every page
+    # carries auth-derived nav state, so bfcache / intermediate proxies must
+    # not show stale state across tabs.
+    "config.middleware.NoStoreMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
