@@ -20,4 +20,12 @@ urlpatterns = [
         name="transfer_ownership",
     ),
     path("<slug:slug>/leave/", views.leave_team, name="leave"),
+    path("<slug:slug>/invites/new/", views.invite_create, name="invite_create"),
+    path(
+        "<slug:slug>/invites/<int:invite_id>/revoke/",
+        views.invite_revoke,
+        name="invite_revoke",
+    ),
+    # Accept link uses a token (not the slug) so it's not guessable from the URL.
+    path("invites/<str:token>/", views.invite_accept, name="invite_accept"),
 ]

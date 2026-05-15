@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}팀 초대 · {{ invite.team.name }}{% endblock %}
+
+{% block content %}
+  <div class="card bg-base-100 shadow max-w-md mx-auto">
+    <div class="card-body">
+      <h1 class="card-title">팀 초대</h1>
+      <p class="text-sm opacity-75 mt-1">
+        <span class="font-medium">{{ invite.team.name }}</span> 팀에 합류하시겠습니까?
+      </p>
+
+      {% if invite.team.description %}
+        <p class="text-xs opacity-60 mt-2 whitespace-pre-line">{{ invite.team.description }}</p>
+      {% endif %}
+
+      {% if already_used %}
+        <div class="alert alert-warning mt-4 text-sm">
+          이 초대 링크는 이미 사용됐습니다.
+        </div>
+      {% elif expired_or_revoked %}
+        <div class="alert alert-error mt-4 text-sm">
+          {% if expired %}이 초대 링크는 만료됐습니다.{% else %}이 초대 링크는 취소됐습니다.{% endif %}
+        </div>
+      {% elif team_full %}
+        <div class="alert alert-error mt-4 text-sm">
+          팀 인원이 {{ invite.team.MAX_MEMBERS }}명에 도달해 더 합류할 수 없습니다.
+        </div>
+      {% else %}
+        <form method="post" class="mt-4 flex justify-end gap-2">
+          {% csrf_token %}
+          <a href="{% url 'teams:list' %}" class="btn btn-ghost btn-sm">취소</a>
+          <button type="submit" class="btn btn-primary btn-sm">합류</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

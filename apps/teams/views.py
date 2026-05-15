@@ -13,7 +13,14 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
 from .forms import TeamCreateForm, TeamEditForm
-from .models import Team, TeamMember, TeamMemberRole, TeamVisibility
+from .models import (
+    Team,
+    TeamInvite,
+    TeamInviteStatus,
+    TeamMember,
+    TeamMemberRole,
+    TeamVisibility,
+)
 
 
 def _is_member(user, team: Team) -> bool:
@@ -163,6 +170,84 @@ def transfer_ownership(request: HttpRequest, slug: str) -> HttpResponse:
 
     messages.success(request, f"owner를 {new_membership.user.nickname}에게 양도했습니다.")
     return redirect(reverse("teams:detail", args=[team.slug]))
+
+
+# --- Invites (spec §4.4.2) --------------------------------------------------
+
+
+@never_cache
+@login_required
+@require_POST
+def invite_create(request: HttpRequest, slug: str) -> HttpResponse:
+    """Owner mints a new invite token (auto-generated, default no expiry).
+
+    Spec §4.4.2: owner generates a link with token. Expiry is optional in V1
+    — admin can revoke instead.
+    """
+    team = get_object_or_404(Team, slug=slug)
+    _require_owner(request.user, team)
+    TeamInvite.objects.create(team=team, invited_by=request.user)
+    return redirect(reverse("teams:detail", args=[team.slug]) + "#invites")
+
+
+@never_cache
+@login_required
+@require_POST
+def invite_revoke(request: HttpRequest, slug: str, invite_id: int) -> HttpResponse:
+    team = get_object_or_404(Team, slug=slug)
+    _require_owner(request.user, team)
+    invite = get_object_or_404(TeamInvite, team=team, pk=invite_id)
+    invite.status = TeamInviteStatus.REVOKED
+    invite.save(update_fields=["status"])
+    return redirect(reverse("teams:detail", args=[team.slug]) + "#invites")
+
+
+@never_cache
+@login_required
+def invite_accept(request: HttpRequest, token: str) -> HttpResponse:
+    """Anyone with a pending invite token can join. POST confirms.
+
+    GET shows a one-page confirmation. Spec §4.4.2.
+    """
+    from django.utils import timezone
+
+    invite = get_object_or_404(TeamInvite.objects.select_related("team"), token=token)
+    expired = invite.expires_at is not None and invite.expires_at < timezone.now()
+
+    if invite.status == TeamInviteStatus.ACCEPTED:
+        # Already used → if they're a member, fine; otherwise show error.
+        return render(
+            request,
+            "teams/invite_accept.html",
+            {"invite": invite, "already_used": True},
+        )
+    if invite.status == TeamInviteStatus.REVOKED or expired:
+        return render(
+            request,
+            "teams/invite_accept.html",
+            {"invite": invite, "expired_or_revoked": True, "expired": expired},
+        )
+
+    if request.method == "POST":
+        team = invite.team
+        if team.memberships.filter(user=request.user).exists():
+            return redirect(reverse("teams:detail", args=[team.slug]))
+        if team.memberships.count() >= Team.MAX_MEMBERS:
+            return render(
+                request,
+                "teams/invite_accept.html",
+                {"invite": invite, "team_full": True},
+            )
+        with transaction.atomic():
+            TeamMember.objects.create(team=team, user=request.user, role=TeamMemberRole.MEMBER)
+            invite.status = TeamInviteStatus.ACCEPTED
+            invite.invitee_user = request.user
+            invite.accepted_at = timezone.now()
+            invite.save(update_fields=["status", "invitee_user", "accepted_at"])
+        messages.success(request, f"'{team.name}' 팀에 합류했습니다.")
+        return redirect(reverse("teams:detail", args=[team.slug]))
+
+    return render(request, "teams/invite_accept.html", {"invite": invite})
 
 
 @never_cache
