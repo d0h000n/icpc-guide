@@ -5,6 +5,51 @@
 {% block content %}
   {% include "problemsets/_breadcrumb.html" %}
 
+  {% if user.is_authenticated and my_teams %}
+    <form method="get" class="flex items-center gap-2 mb-4 flex-wrap">
+      <span class="text-sm opacity-70">팀 컨텍스트</span>
+      <select name="team" onchange="this.form.submit()"
+              class="select select-bordered select-sm">
+        <option value="">없음</option>
+        {% for t in my_teams %}
+          <option value="{{ t.slug }}"
+                  {% if selected_team and selected_team.slug == t.slug %}selected{% endif %}>
+            {{ t.name }}
+          </option>
+        {% endfor %}
+      </select>
+      {% if selected_team %}
+        <a href="{% url 'problemsets:detail' pk=problem_set.pk %}"
+           class="btn btn-ghost btn-xs">초기화</a>
+      {% endif %}
+    </form>
+  {% endif %}
+
+  {% if selected_team %}
+    <section class="card bg-base-100 shadow mb-4">
+      <div class="card-body p-4">
+        <div class="flex items-baseline justify-between gap-2 flex-wrap">
+          <h3 class="font-medium">팀: {{ selected_team.name }}</h3>
+          <span class="text-sm">
+            팀 누적 (서브트리 distinct):
+            <span class="font-mono">{{ team_subtree_solved }} / {{ team_subtree_total }}</span>
+          </span>
+        </div>
+        <ul class="divide-y divide-base-200 mt-2 text-sm">
+          {% for m in team_members %}
+            <li class="py-1.5 flex items-center justify-between gap-2">
+              <a href="{% url 'accounts:profile' nickname=m.user.nickname %}"
+                 class="link link-hover">{{ m.user.nickname }}</a>
+              <span class="font-mono text-xs opacity-70">
+                {{ m.solved_in_subtree }} / {{ team_subtree_total }}
+              </span>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </section>
+  {% endif %}
+
   <article class="card bg-base-100 shadow mb-6">
     <div class="card-body">
       <h1 class="card-title text-2xl">{{ problem_set.title }}</h1>
@@ -59,6 +104,9 @@
                   {% if user.is_authenticated %}
                     <th class="w-28">해결</th>
                   {% endif %}
+                  {% if selected_team %}
+                    <th>팀원 해결</th>
+                  {% endif %}
                 </tr>
               </thead>
               <tbody>
@@ -85,6 +133,17 @@
                     {% if user.is_authenticated %}
                       <td>
                         {% include "solving/_toggle_button.html" with problem=appearance.problem problem_set=problem_set is_solved=appearance.is_solved_by_me %}
+                      </td>
+                    {% endif %}
+                    {% if selected_team %}
+                      <td>
+                        <div class="flex flex-wrap gap-1">
+                          {% for m in appearance.team_solvers %}
+                            <span class="badge badge-success badge-sm">{{ m.user.nickname }}</span>
+                          {% empty %}
+                            <span class="opacity-30 text-xs">아무도 안 풂</span>
+                          {% endfor %}
+                        </div>
                       </td>
                     {% endif %}
                   </tr>

@@ -14,7 +14,8 @@ from apps.ratings.models import Comment, Rating
 from apps.ratings.services import aggregate_for as rating_aggregate_for
 from apps.ratings.services import my_rating as my_rating_for
 from apps.solving.models import SolveRecord
-from apps.solving.services import completion_for
+from apps.solving.services import completion_for, subtree_problem_count
+from apps.teams.models import Team, TeamMember
 
 from .models import CollapsedNode, ProblemSet
 
@@ -175,6 +176,66 @@ def problem_set_detail(request: HttpRequest, pk: int) -> HttpResponse:
     avg_stars, rating_count = rating_aggregate_for(pset)
     my_r = my_rating_for(pset, request.user)
 
+    # --- Team context (spec §4.4.3) -----------------------------------
+    my_teams: list[Team] = []
+    selected_team: Team | None = None
+    team_members: list[TeamMember] = []
+    # {problem_id: set of user_ids that solved it} — used in leaf table
+    team_member_solves_by_problem: dict[int, set[int]] = {}
+    # {user_id: solved_count} for the current set's subtree
+    per_member_subtree_solved: dict[int, int] = {}
+    team_subtree_solved = 0  # union: any-member-solved distinct count
+
+    if request.user.is_authenticated:
+        my_teams = list(
+            Team.objects.filter(memberships__user=request.user).order_by("name").distinct()
+        )
+
+    team_slug = (request.GET.get("team") or "").strip()
+    if team_slug and request.user.is_authenticated:
+        # Only honor if the requester is a member — spec §4.4.3.
+        selected_team = (
+            Team.objects.filter(slug=team_slug, memberships__user=request.user).distinct().first()
+        )
+
+    if selected_team is not None:
+        team_members = list(
+            selected_team.memberships.select_related("user").order_by("-role", "joined_at")
+        )
+        user_ids = [m.user_id for m in team_members]
+
+        if is_leaf and appearances:
+            problem_ids = [a.problem_id for a in appearances]
+            solve_rows = SolveRecord.objects.filter(
+                user_id__in=user_ids,
+                problem_id__in=problem_ids,
+            ).values_list("problem_id", "user_id")
+            from collections import defaultdict
+
+            mapping: defaultdict[int, set[int]] = defaultdict(set)
+            for pid, uid in solve_rows:
+                mapping[pid].add(uid)
+            team_member_solves_by_problem = dict(mapping)
+
+        # Subtree-wide stats: per-member counts + union count.
+        subtree_solves = SolveRecord.objects.filter(
+            user_id__in=user_ids,
+            problem__appearances__problem_set__path__startswith=pset.path,
+        ).values_list("problem_id", "user_id")
+        per_member_problem_ids: dict[int, set[int]] = {uid: set() for uid in user_ids}
+        all_problem_ids: set[int] = set()
+        for pid, uid in subtree_solves:
+            per_member_problem_ids[uid].add(pid)
+            all_problem_ids.add(pid)
+        per_member_subtree_solved = {uid: len(pids) for uid, pids in per_member_problem_ids.items()}
+        team_subtree_solved = len(all_problem_ids)
+        # Attach per-member counts to the TeamMember rows so the template can
+        # render them without a dict-lookup template tag.
+        for m in team_members:
+            m.solved_in_subtree = per_member_subtree_solved.get(m.user_id, 0)
+
+    team_subtree_total = subtree_problem_count(pset) if selected_team else 0
+
     comments = (
         Comment.objects.filter(rating__problem_set=pset)
         .select_related("rating__user")
@@ -185,6 +246,15 @@ def problem_set_detail(request: HttpRequest, pk: int) -> HttpResponse:
     if request.user.is_authenticated:
         my_comment = comments.filter(rating__user=request.user).first()
         has_rating = Rating.objects.filter(user=request.user, problem_set=pset).exists()
+
+    # Per-appearance: list of (member, solved) tuples for the team-context row.
+    if selected_team is not None and is_leaf:
+        for app in appearances:
+            app.team_solvers = [
+                m
+                for m in team_members
+                if m.user_id in team_member_solves_by_problem.get(app.problem_id, set())
+            ]
 
     return render(
         request,
@@ -205,5 +275,12 @@ def problem_set_detail(request: HttpRequest, pk: int) -> HttpResponse:
             "comments": comments,
             "my_comment": my_comment,
             "has_rating": has_rating,
+            # Team context
+            "my_teams": my_teams,
+            "selected_team": selected_team,
+            "team_members": team_members,
+            "per_member_subtree_solved": per_member_subtree_solved,
+            "team_subtree_solved": team_subtree_solved,
+            "team_subtree_total": team_subtree_total,
         },
     )
