@@ -36,6 +36,23 @@
       var token = _csrfTokenFromCookie();
       if (token) input.value = token;
     }, true);
+
+    // Cross-tab auth sync: when a tab regains focus, if the server-set
+    // auth_marker cookie differs from the value at render time, the user
+    // logged in/out elsewhere — reload to pick up the new state.
+    (function () {
+      function _readMarker() {
+        var m = document.cookie.match(/(?:^|;\s*)auth_marker=([^;]+)/);
+        return m ? decodeURIComponent(m[1]) : null;
+      }
+      var initial = _readMarker();
+      document.addEventListener("visibilitychange", function () {
+        if (document.visibilityState !== "visible") return;
+        if (_readMarker() !== initial) {
+          location.reload();
+        }
+      });
+    })();
   </script>
 </head>
 <body class="min-h-screen bg-base-200">

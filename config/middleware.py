@@ -33,4 +33,19 @@ class NoStoreMiddleware:
         # for any well-behaved proxy that does honor it.
         response["Cache-Control"] = "no-store, no-cache, must-revalidate, private"
         response["Pragma"] = "no-cache"
+
+        # Cross-tab auth-state marker (read by base.html JS).
+        # Updates on every response. When a tab regains focus, its embedded
+        # init marker is compared to the live cookie value — mismatch triggers
+        # a reload so a tab opened before login/logout doesn't show stale UI.
+        user = getattr(request, "user", None)
+        marker = str(user.pk) if (user is not None and user.is_authenticated) else "0"
+        if request.COOKIES.get("auth_marker") != marker:
+            response.set_cookie(
+                "auth_marker",
+                marker,
+                max_age=60 * 60 * 24 * 365,
+                samesite="Lax",
+                httponly=False,
+            )
         return response
