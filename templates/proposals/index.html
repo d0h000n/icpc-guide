@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}제안 · Problem Set Tracker{% endblock %}
+
+{% block content %}
+  <div class="max-w-3xl mx-auto flex flex-col gap-6">
+    <div class="card bg-base-100 shadow">
+      <div class="card-body">
+        <h1 class="card-title">제안하기</h1>
+        <p class="text-sm opacity-70">
+          새로운 카테고리나 Problem Set을 제안할 수 있습니다. 운영자 검토 후 사이트에 반영됩니다.
+        </p>
+        <div class="flex flex-wrap gap-2 mt-2">
+          <a href="{% url 'proposals:category' %}" class="btn btn-primary btn-sm">
+            새 카테고리 제안
+          </a>
+          <a href="{% url 'proposals:problem_set' %}" class="btn btn-primary btn-sm">
+            새 Problem Set 제안
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card bg-base-100 shadow">
+      <div class="card-body">
+        <h2 class="card-title text-base">내 카테고리 제안</h2>
+        {% if my_category_proposals %}
+          <div class="overflow-x-auto">
+            <table class="table table-sm">
+              <thead>
+                <tr><th>제안 일시</th><th>short_name</th><th>이름</th><th>상태</th><th>관리자 메모</th></tr>
+              </thead>
+              <tbody>
+                {% for p in my_category_proposals %}
+                  <tr>
+                    <td>{{ p.created_at|date:"Y-m-d H:i" }}</td>
+                    <td><code>{{ p.short_name }}</code></td>
+                    <td>{{ p.name }}</td>
+                    <td>
+                      <span class="badge {% if p.status == 'approved' %}badge-success{% elif p.status == 'rejected' %}badge-error{% else %}badge-ghost{% endif %}">
+                        {{ p.get_status_display }}
+                      </span>
+                    </td>
+                    <td class="text-sm opacity-70">{{ p.admin_note|default:"—" }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-sm opacity-60">아직 제안한 카테고리가 없습니다.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card bg-base-100 shadow">
+      <div class="card-body">
+        <h2 class="card-title text-base">내 Problem Set 제안</h2>
+        {% if my_problemset_proposals %}
+          <div class="overflow-x-auto">
+            <table class="table table-sm">
+              <thead>
+                <tr><th>제안 일시</th><th>제목</th><th>상태</th><th>관리자 메모</th></tr>
+              </thead>
+              <tbody>
+                {% for p in my_problemset_proposals %}
+                  <tr>
+                    <td>{{ p.created_at|date:"Y-m-d H:i" }}</td>
+                    <td>{{ p.payload.title|default:"(제목 없음)" }}</td>
+                    <td>
+                      <span class="badge {% if p.status == 'approved' %}badge-success{% elif p.status == 'rejected' %}badge-error{% else %}badge-ghost{% endif %}">
+                        {{ p.get_status_display }}
+                      </span>
+                    </td>
+                    <td class="text-sm opacity-70">{{ p.admin_note|default:"—" }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-sm opacity-60">아직 제안한 Problem Set이 없습니다.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

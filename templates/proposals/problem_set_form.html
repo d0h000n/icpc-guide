@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}새 Problem Set 제안 · Problem Set Tracker{% endblock %}
+
+{% block content %}
+  <div class="card bg-base-100 shadow max-w-2xl mx-auto">
+    <div class="card-body">
+      <h1 class="card-title">새 Problem Set 제안</h1>
+      <p class="text-sm opacity-70">
+        제안 내용은 운영자 검토 후 트리에 반영됩니다. 자식 set으로 채워질 내부 노드라면 문제 목록은 비워두세요.
+      </p>
+
+      <form method="post" class="flex flex-col gap-3 mt-2">
+        {% csrf_token %}
+
+        <div class="form-control">
+          <span class="label-text text-sm">제목</span>
+          {{ form.title }}
+          {% for err in form.title.errors %}
+            <span class="label-text-alt text-error mt-1">{{ err }}</span>
+          {% endfor %}
+        </div>
+
+        <div class="form-control">
+          <span class="label-text text-sm">부모 Problem Set (선택)</span>
+          {{ form.parent }}
+          <span class="label-text-alt opacity-60 mt-1">
+            비워두면 최상위로 들어갑니다. (예: "ICPC" 루트 아래에 "ICPC Yokohama 2024"를 두려면 ICPC 선택)
+          </span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div class="form-control">
+            <span class="label-text text-sm">연도 (선택)</span>
+            {{ form.year }}
+          </div>
+          <div class="form-control">
+            <span class="label-text text-sm">카테고리 (선택, 다중)</span>
+            {{ form.categories }}
+          </div>
+        </div>
+
+        <div class="form-control">
+          <span class="label-text text-sm">설명 (선택)</span>
+          {{ form.description }}
+        </div>
+
+        <div class="form-control">
+          <span class="label-text text-sm">외부 URL (선택)</span>
+          {{ form.external_url }}
+        </div>
+
+        <div class="form-control">
+          <span class="label-text text-sm">문제 목록 (선택, 리프 노드만)</span>
+          {{ form.problems_text }}
+          <span class="label-text-alt opacity-60 mt-1">{{ form.problems_text.help_text }}</span>
+          {% for err in form.problems_text.errors %}
+            <span class="label-text-alt text-error mt-1">{{ err }}</span>
+          {% endfor %}
+        </div>
+
+        {% if form.non_field_errors %}
+          <div class="alert alert-error">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="flex justify-end gap-2 mt-2">
+          <a href="{% url 'proposals:index' %}" class="btn btn-ghost btn-sm">취소</a>
+          <button type="submit" class="btn btn-primary btn-sm">제안 제출</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

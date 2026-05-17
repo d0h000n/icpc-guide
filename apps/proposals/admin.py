@@ -6,7 +6,12 @@ from django.contrib import admin, messages
 from django.http import HttpRequest
 
 from .models import CategoryProposal, ProblemSetProposal
-from .services import ProposalError, approve_category_proposal, reject_proposal
+from .services import (
+    ProposalError,
+    approve_category_proposal,
+    approve_problem_set_proposal,
+    reject_proposal,
+)
 
 
 class _BaseProposalAdmin(admin.ModelAdmin):
@@ -54,11 +59,23 @@ class CategoryProposalAdmin(_BaseProposalAdmin):
 class ProblemSetProposalAdmin(_BaseProposalAdmin):
     list_display = ("payload_title", "user", "status", "created_at")
     search_fields = ("user__nickname",)
-    actions = ("reject_selected",)
+    actions = ("approve_selected", "reject_selected")
 
     @admin.display(description="title")
     def payload_title(self, obj: ProblemSetProposal) -> str:
         return obj.payload.get("title") or "(no title)"
+
+    @admin.action(description="선택된 제안 승인 (ProblemSet 생성)")
+    def approve_selected(self, request: HttpRequest, queryset) -> None:
+        approved = 0
+        for proposal in queryset:
+            try:
+                approve_problem_set_proposal(proposal, request.user)
+                approved += 1
+            except ProposalError as exc:
+                messages.error(request, f"#{proposal.pk}: {exc}")
+        if approved:
+            messages.success(request, f"{approved}건 승인 완료.")
 
     @admin.action(description="선택된 제안 반려")
     def reject_selected(self, request: HttpRequest, queryset) -> None:
@@ -71,14 +88,3 @@ class ProblemSetProposalAdmin(_BaseProposalAdmin):
                 messages.error(request, f"#{proposal.pk}: {exc}")
         if rejected:
             messages.success(request, f"{rejected}건 반려 완료.")
-
-    # NOTE on approval: ProblemSetProposal carries a free-form JSON payload;
-    # rather than a one-click approve, admins copy/paste payload into the real
-    # ProblemSet form (Categories→ProblemSet) and then mark this proposal
-    # approved via the change form. Spec §4.1.6 leaves the exact workflow to
-    # admin discretion. A scripted approve_problem_set_proposal() lives in
-    # services.py once the payload schema is locked (step 7.2).
-
-    def get_actions(self, request: HttpRequest):
-        # Keep the bulk-reject action; approval is per-record via change form.
-        return super().get_actions(request)
