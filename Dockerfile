@@ -40,6 +40,10 @@ WORKDIR /app
 
 COPY --from=builder --chown=app:app /app /app
 
+# /app itself was created by WORKDIR as root; chown so the app user can
+# write `staticfiles/` during collectstatic below.
+RUN chown app:app /app && mkdir -p /app/staticfiles && chown app:app /app/staticfiles
+
 USER app
 
 # Collect static at build time so they're baked into the image.
