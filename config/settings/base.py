@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "apps.solving",
     "apps.ratings",
     "apps.teams",
+    "apps.proposals",
 ]
 
 MIDDLEWARE = [
