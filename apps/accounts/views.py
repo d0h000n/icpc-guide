@@ -25,6 +25,34 @@ def healthz(request: HttpRequest) -> HttpResponse:
     return HttpResponse("ok", content_type="text/plain")
 
 
+def whoami(request: HttpRequest) -> HttpResponse:
+    """Diagnostic — what the server thinks about this request's auth state.
+
+    Available only when DEBUG=True; returns 404 in production so a deployed
+    instance never leaks session/cookie details to the public.
+    """
+    from django.conf import settings
+    from django.http import Http404
+
+    if not settings.DEBUG:
+        raise Http404("not available in production")
+
+    u = request.user
+    lines = [
+        f"is_authenticated: {u.is_authenticated}",
+        f"user.pk: {getattr(u, 'pk', None)}",
+        f"user.nickname: {getattr(u, 'nickname', None)}",
+        f"session_key: {request.session.session_key}",
+        f"cookies.sessionid: {request.COOKIES.get('sessionid')}",
+        f"cookies.auth_marker: {request.COOKIES.get('auth_marker')}",
+        f"cookies.csrftoken: {request.COOKIES.get('csrftoken')}",
+        f"host: {request.get_host()}",
+        f"scheme: {request.scheme}",
+        f"x_forwarded_proto: {request.META.get('HTTP_X_FORWARDED_PROTO')}",
+    ]
+    return HttpResponse("\n".join(lines), content_type="text/plain")
+
+
 @never_cache
 @login_required
 def me(request: HttpRequest) -> HttpResponse:
