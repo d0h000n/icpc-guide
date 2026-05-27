@@ -5,7 +5,26 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from django.conf import settings
-from django.http import HttpRequest, HttpResponseBase
+from django.http import HttpRequest, HttpResponse, HttpResponseBase
+
+
+class HealthCheckMiddleware:
+    """Short-circuit `/healthz` before any host validation.
+
+    Fly's Consul checker hits the machine on its internal IP (e.g.
+    `172.19.24.98:8000`), so the Host header doesn't match ALLOWED_HOSTS and
+    SecurityMiddleware rejects the request with 400. We answer health checks
+    here so the rest of the chain never sees them; user traffic still hits
+    SecurityMiddleware normally because it arrives via the public hostname.
+    """
+
+    def __init__(self, get_response: Callable[[HttpRequest], HttpResponseBase]):
+        self.get_response = get_response
+
+    def __call__(self, request: HttpRequest) -> HttpResponseBase:
+        if request.path == "/healthz":
+            return HttpResponse("ok", content_type="text/plain")
+        return self.get_response(request)
 
 
 class NoStoreMiddleware:
