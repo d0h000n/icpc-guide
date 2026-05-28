@@ -5,6 +5,9 @@ categories:
 - short_name: kor
   name: Korea
   url: https://qoj.ac/category/50
+- short_name: eur
+  name: Europe
+  # url: 
 - short_name: ptz
   name: Petrozavodsk Training Camp
   description: 러시아·동유럽 주축으로 운영하는 대회로, 난이도가 전반적으로 높고 수학 비중이 강한 편이다.
@@ -41,6 +44,21 @@ problem_sets:
         title: Interactive Number Guessing
         external_url: https://qoj.ac/contest/1101/problem/5471
         tier: 13
+  - title: Europe Subregionals
+    categories:
+    - eur
+    - icpc
+    children:
+    - title: Benelux - BCPC
+    - title: German - GCPC
+    - title: Nordic - NCPC
+      children:
+      - title: NCPC 2013
+        year: 2013
+        problems:
+        - label: H
+          title: 핀볼
+    - title: Poland - AMPPZ
 - title: PTZ Camp
   description: Petrozavodsk Training Camp는 러시아·동유럽 팀들이 주축이 되어 운영하는 ICPC 스타일 팀 대회로,
     문제 난이도가 전반적으로 높고 수학 비중이 강한 편이라는 평판이 있다.
