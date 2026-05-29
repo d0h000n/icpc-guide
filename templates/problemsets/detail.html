@@ -123,7 +123,9 @@
                                class="w-6 h-6 inline-block" />
                         {% endwith %}
                       {% else %}
-                        <span class="opacity-30">—</span>
+                        <img src="{% static 'tiers/0.svg' %}"
+                             alt="Unrated" title="Unrated"
+                             class="w-6 h-6 inline-block" />
                       {% endif %}
                     </td>
                     <td>
