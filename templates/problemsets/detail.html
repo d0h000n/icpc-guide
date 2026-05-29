@@ -114,20 +114,7 @@
                   <tr>
                     <td><span class="font-mono">{{ appearance.label }}</span></td>
                     <td>{{ appearance.problem.title }}</td>
-                    <td>
-                      {% if appearance.problem.solved_ac_tier_manual %}
-                        {% with t=appearance.problem.solved_ac_tier_manual|stringformat:"s" %}
-                          <img src="{% static 'tiers/'|add:t|add:'.svg' %}"
-                               alt="{{ appearance.problem.get_solved_ac_tier_manual_display }}"
-                               title="{{ appearance.problem.get_solved_ac_tier_manual_display }}"
-                               class="w-6 h-6 inline-block" />
-                        {% endwith %}
-                      {% else %}
-                        <img src="{% static 'tiers/0.svg' %}"
-                             alt="Unrated" title="Unrated"
-                             class="w-6 h-6 inline-block" />
-                      {% endif %}
-                    </td>
+                    <td>{% include "problemsets/_tier_badge.html" with problem=appearance.problem %}</td>
                     <td>
                       {% if appearance.problem.external_url %}
                         <a href="{{ appearance.problem.external_url }}" rel="noopener noreferrer"
@@ -167,6 +154,40 @@
         {% endif %}
       </div>
     </section>
+  {% elif show_child_problems %}
+    {% for entry in children %}
+      <section class="card bg-base-100 shadow mb-4">
+        <div class="card-body">
+          <div class="flex items-baseline justify-between gap-2 flex-wrap">
+            <h2 class="card-title text-base">
+              <a href="{% url 'problemsets:detail' pk=entry.node.pk %}"
+                 class="link link-hover">{{ entry.node.title }}</a>
+              {% if entry.node.year %}<span class="badge badge-ghost badge-sm">{{ entry.node.year }}</span>{% endif %}
+            </h2>
+            {% if user.is_authenticated %}
+              {% include "solving/_completion_counter.html" with problem_set=entry.node solved_count=entry.solved total_count=entry.total %}
+            {% endif %}
+          </div>
+          <div class="mt-3">
+            {% if entry.is_leaf %}
+              {% if entry.appearances %}
+                {% include "problemsets/_problem_tiles.html" with appearances=entry.appearances problem_set=entry.node %}
+              {% else %}
+                <p class="opacity-60 text-sm">아직 등록된 문제가 없습니다.</p>
+              {% endif %}
+            {% else %}
+              <a href="{% url 'problemsets:detail' pk=entry.node.pk %}"
+                 class="link link-hover text-sm">하위 {{ entry.node.numchild }}개 set 보기 →</a>
+            {% endif %}
+          </div>
+        </div>
+      </section>
+    {% endfor %}
+    {% if not user.is_authenticated %}
+      <p class="text-xs opacity-60">
+        <a href="{% url 'account_login' %}" class="link">로그인</a>하면 풀이를 체크할 수 있습니다.
+      </p>
+    {% endif %}
   {% else %}
     <section class="card bg-base-100 shadow">
       <div class="card-body">

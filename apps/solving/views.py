@@ -50,5 +50,7 @@ def toggle_solve(
             "is_solved": is_solved,
             "solved_count": solved,
             "total_count": total,
+            # "tile" → compact tier-badge toggle; default → text button.
+            "variant": request.GET.get("variant") or "button",
         },
     )

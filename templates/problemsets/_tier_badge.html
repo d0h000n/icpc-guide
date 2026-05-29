@@ -1,0 +1,5 @@
+{% load static %}{% comment %}
+solved.ac tier badge image for one Problem.
+Expects: problem. Optional: cls (size classes, default w-6 h-6).
+Falls back to 0.svg (Unrated) when no tier is set.
+{% endcomment %}{% if problem.solved_ac_tier_manual %}{% with t=problem.solved_ac_tier_manual|stringformat:"s" %}<img src="{% static 'tiers/'|add:t|add:'.svg' %}" alt="{{ problem.get_solved_ac_tier_manual_display }}" title="{{ problem.get_solved_ac_tier_manual_display }}" class="{{ cls|default:'w-6 h-6' }} inline-block" />{% endwith %}{% else %}<img src="{% static 'tiers/0.svg' %}" alt="Unrated" title="Unrated" class="{{ cls|default:'w-6 h-6' }} inline-block" />{% endif %}

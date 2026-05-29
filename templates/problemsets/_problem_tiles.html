@@ -1,0 +1,27 @@
+{% comment %}
+Horizontal tile grid of a leaf set's problems.
+Expects: appearances (each annotated with is_solved_by_me, and team_solvers when
+a team is selected), problem_set (the leaf set the tiles belong to).
+Reads selected_team from the surrounding context.
+{% endcomment %}
+<div class="flex flex-wrap gap-3">
+  {% for appearance in appearances %}
+    <div class="flex flex-col items-center gap-1 w-14">
+      <div class="flex items-center gap-1 leading-none">
+        <span class="font-mono text-sm font-semibold">{{ appearance.label }}</span>
+        {% if appearance.problem.external_url %}
+          <a href="{{ appearance.problem.external_url }}" rel="noopener noreferrer"
+             target="_blank" class="link link-primary text-xs">↗</a>
+        {% endif %}
+      </div>
+      {% include "solving/_toggle_button.html" with problem=appearance.problem problem_set=problem_set is_solved=appearance.is_solved_by_me variant="tile" %}
+      {% if selected_team %}
+        <div class="flex flex-wrap justify-center gap-0.5">
+          {% for m in appearance.team_solvers %}
+            <span class="badge badge-success badge-xs" title="{{ m.user.nickname }}">{{ m.user.nickname|slice:":2" }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+  {% endfor %}
+</div>

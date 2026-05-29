@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
+
 from django.contrib.auth.decorators import login_required
 from django.db.models import Exists, OuterRef, Q
 from django.http import HttpRequest, HttpResponse
@@ -119,6 +121,22 @@ def toggle_collapse(request: HttpRequest, pk: int) -> HttpResponse:
     return response
 
 
+def _annotated_appearances(pset: ProblemSet, user) -> list:
+    """Appearances of a leaf set, each annotated with `is_solved_by_me` (bool)."""
+    qs = pset.appearances.select_related("problem").order_by("label")
+    if user.is_authenticated:
+        qs = qs.annotate(
+            is_solved_by_me=Exists(
+                SolveRecord.objects.filter(user=user, problem=OuterRef("problem_id"))
+            )
+        )
+    appearances = list(qs)
+    if not user.is_authenticated:
+        for a in appearances:
+            a.is_solved_by_me = False
+    return appearances
+
+
 @never_cache
 @require_safe
 def problem_set_detail(request: HttpRequest, pk: int) -> HttpResponse:
@@ -141,27 +159,38 @@ def problem_set_detail(request: HttpRequest, pk: int) -> HttpResponse:
 
     solved_count, total_count = completion_for(pset, request.user)
 
+    appearances = _annotated_appearances(pset, request.user) if is_leaf else []
+
     children_with_completion = []
     for child in children:
         c_solved, c_total = completion_for(child, request.user)
-        children_with_completion.append({"node": child, "solved": c_solved, "total": c_total})
+        child_is_leaf = child.is_leaf()
+        children_with_completion.append(
+            {
+                "node": child,
+                "solved": c_solved,
+                "total": c_total,
+                "is_leaf": child_is_leaf,
+                "appearances": (
+                    _annotated_appearances(child, request.user) if child_is_leaf else []
+                ),
+            }
+        )
 
-    appearances: list = []
+    # Internal node whose children carry problems directly (e.g. "Yokohama" →
+    # "Yokohama 2023", "Yokohama 2024"): show each child's problems inline as a
+    # tile grid instead of a bare link list. Only kicks in when at least one
+    # leaf child actually has problems — otherwise keep the summary list.
+    show_child_problems = (not is_leaf) and any(
+        e["is_leaf"] and e["appearances"] for e in children_with_completion
+    )
+
+    # Flat list of every appearance rendered on this page (leaf table or the
+    # per-child tile grids) — drives the team-context solve lookups below.
     if is_leaf:
-        appearances_qs = pset.appearances.select_related("problem").order_by("label")
-        if request.user.is_authenticated:
-            appearances_qs = appearances_qs.annotate(
-                is_solved_by_me=Exists(
-                    SolveRecord.objects.filter(
-                        user=request.user,
-                        problem=OuterRef("problem_id"),
-                    )
-                )
-            )
-        appearances = list(appearances_qs)
-        if not request.user.is_authenticated:
-            for a in appearances:
-                a.is_solved_by_me = False
+        all_appearances = appearances
+    else:
+        all_appearances = [a for e in children_with_completion for a in e["appearances"]]
 
     ancestors = list(pset.get_ancestors())
 
@@ -204,14 +233,12 @@ def problem_set_detail(request: HttpRequest, pk: int) -> HttpResponse:
         )
         user_ids = [m.user_id for m in team_members]
 
-        if is_leaf and appearances:
-            problem_ids = [a.problem_id for a in appearances]
+        if all_appearances:
+            problem_ids = [a.problem_id for a in all_appearances]
             solve_rows = SolveRecord.objects.filter(
                 user_id__in=user_ids,
                 problem_id__in=problem_ids,
             ).values_list("problem_id", "user_id")
-            from collections import defaultdict
-
             mapping: defaultdict[int, set[int]] = defaultdict(set)
             for pid, uid in solve_rows:
                 mapping[pid].add(uid)
@@ -247,9 +274,9 @@ def problem_set_detail(request: HttpRequest, pk: int) -> HttpResponse:
         my_comment = comments.filter(rating__user=request.user).first()
         has_rating = Rating.objects.filter(user=request.user, problem_set=pset).exists()
 
-    # Per-appearance: list of (member, solved) tuples for the team-context row.
-    if selected_team is not None and is_leaf:
-        for app in appearances:
+    # Per-appearance: which team members solved it (leaf table or tile grids).
+    if selected_team is not None:
+        for app in all_appearances:
             app.team_solvers = [
                 m
                 for m in team_members
@@ -264,6 +291,7 @@ def problem_set_detail(request: HttpRequest, pk: int) -> HttpResponse:
             "ancestors": ancestors,
             "is_leaf": is_leaf,
             "children": children_with_completion,
+            "show_child_problems": show_child_problems,
             "appearances": appearances,
             "solved_count": solved_count,
             "total_count": total_count,

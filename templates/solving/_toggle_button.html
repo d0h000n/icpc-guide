@@ -1,12 +1,31 @@
 {% comment %}
-Toggle button for one Problem viewed within a ProblemSet.
+Toggle control for one Problem viewed within a ProblemSet.
 Expects: problem, problem_set, is_solved (bool).
+Optional: variant — "tile" renders a compact tier-badge toggle; default is
+the text button used in the leaf table.
 {% endcomment %}
-<button id="solve-btn-{{ problem_set.pk }}-{{ problem.pk }}"
-        type="button"
-        hx-post="{% url 'solving:toggle' problem_set_pk=problem_set.pk problem_pk=problem.pk %}"
-        hx-swap="outerHTML"
-        class="btn btn-xs {% if is_solved %}btn-success{% else %}btn-outline{% endif %}"
-        aria-pressed="{{ is_solved|yesno:'true,false' }}">
-  {% if is_solved %}✓ 푼 문제{% else %}체크{% endif %}
-</button>
+{% if variant == "tile" %}
+  <button id="solve-btn-{{ problem_set.pk }}-{{ problem.pk }}"
+          type="button"
+          {% if user.is_authenticated %}
+            hx-post="{% url 'solving:toggle' problem_set_pk=problem_set.pk problem_pk=problem.pk %}?variant=tile"
+            hx-swap="outerHTML"
+            aria-pressed="{{ is_solved|yesno:'true,false' }}"
+          {% else %}disabled{% endif %}
+          title="{{ problem.title }}"
+          class="relative rounded-md p-1 leading-none transition {% if is_solved %}ring-2 ring-success bg-success/10{% else %}ring-1 ring-base-300 hover:ring-primary{% endif %}">
+    {% include "problemsets/_tier_badge.html" with problem=problem cls="w-8 h-8" %}
+    {% if is_solved %}
+      <span class="absolute -top-1 -right-1 badge badge-success badge-xs">✓</span>
+    {% endif %}
+  </button>
+{% else %}
+  <button id="solve-btn-{{ problem_set.pk }}-{{ problem.pk }}"
+          type="button"
+          hx-post="{% url 'solving:toggle' problem_set_pk=problem_set.pk problem_pk=problem.pk %}"
+          hx-swap="outerHTML"
+          class="btn btn-xs {% if is_solved %}btn-success{% else %}btn-outline{% endif %}"
+          aria-pressed="{{ is_solved|yesno:'true,false' }}">
+    {% if is_solved %}✓ 푼 문제{% else %}체크{% endif %}
+  </button>
+{% endif %}

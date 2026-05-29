@@ -67,6 +67,24 @@ def test_toggle_requires_login(client) -> None:
 
 
 @pytest.mark.django_db
+def test_toggle_tile_variant_returns_tile_markup(client) -> None:
+    """?variant=tile yields the compact tier-badge toggle, not the text button."""
+    user = UserFactory()
+    leaf = ProblemSetRootFactory()
+    problem = ProblemFactory()
+    ProblemAppearance.objects.create(problem=problem, problem_set=leaf, label="A")
+    client.force_login(user)
+
+    response = client.post(_toggle_url(leaf, problem) + "?variant=tile")
+    assert response.status_code == 200
+    body = response.content.decode()
+    # Tile markup: solved ring + tier badge image, not the "푼 문제" text button.
+    assert "ring-success" in body
+    assert "tiers/" in body
+    assert "푼 문제" not in body
+
+
+@pytest.mark.django_db
 def test_toggle_get_method_not_allowed(client) -> None:
     user = UserFactory()
     leaf = ProblemSetRootFactory()

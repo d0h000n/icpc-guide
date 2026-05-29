@@ -55,6 +55,44 @@ def test_detail_anonymous_can_view_internal_node(client) -> None:
 
 
 @pytest.mark.django_db
+def test_internal_node_with_leaf_children_shows_inline_tiles(client) -> None:
+    """A node one level above leaves shows each child's problems inline (tiles)."""
+    root = ProblemSet.add_root(title="Yokohama")
+    y2023 = root.add_child(title="Yokohama 2023", year=2023)
+    y2024 = root.add_child(title="Yokohama 2024", year=2024)
+    pa = Problem.objects.create(title="Alpha")
+    pb = Problem.objects.create(title="Beta")
+    ProblemAppearance.objects.create(problem=pa, problem_set=y2023, label="A")
+    ProblemAppearance.objects.create(problem=pb, problem_set=y2024, label="B")
+
+    response = client.get(reverse("problemsets:detail", args=[root.pk]))
+    assert response.status_code == 200
+    body = response.content.decode()
+    # Each year is its own section with an inline tile for its problem.
+    assert "Yokohama 2023" in body
+    assert "Yokohama 2024" in body
+    assert f"solve-btn-{y2023.pk}-{pa.pk}" in body
+    assert f"solve-btn-{y2024.pk}-{pb.pk}" in body
+    # Tier badge image is rendered (Unrated fallback here).
+    assert "tiers/0.svg" in body
+    # Not the bare summary list.
+    assert "하위 set" not in body
+
+
+@pytest.mark.django_db
+def test_internal_node_all_empty_leaf_children_keeps_summary(client) -> None:
+    """If no leaf child has problems, fall back to the summary list."""
+    root = ProblemSet.add_root(title="Camp")
+    root.add_child(title="2024 Summer", year=2024)
+    root.add_child(title="2024 Winter", year=2024)
+
+    response = client.get(reverse("problemsets:detail", args=[root.pk]))
+    body = response.content.decode()
+    assert response.status_code == 200
+    assert "하위 set" in body
+
+
+@pytest.mark.django_db
 def test_detail_breadcrumb_includes_ancestors(client) -> None:
     root = ProblemSet.add_root(title="Camp")
     mid = root.add_child(title="2024 Summer", year=2024)
