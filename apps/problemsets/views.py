@@ -148,7 +148,7 @@ def problem_set_detail(request: HttpRequest, pk: int) -> HttpResponse:
 
     appearances: list = []
     if is_leaf:
-        appearances_qs = pset.appearances.select_related("problem").order_by("order_index")
+        appearances_qs = pset.appearances.select_related("problem").order_by("label")
         if request.user.is_authenticated:
             appearances_qs = appearances_qs.annotate(
                 is_solved_by_me=Exists(

@@ -156,7 +156,7 @@ def test_problems_become_appearances_on_leaf(tmp_path) -> None:
     _run(path)
 
     yk = ProblemSet.objects.get(title="Yokohama 2023")
-    apps = list(yk.appearances.order_by("order_index"))
+    apps = list(yk.appearances.order_by("label"))
     assert [a.label for a in apps] == ["A", "B"]
     assert [a.problem.title for a in apps] == [
         "Hasty Santa Claus",

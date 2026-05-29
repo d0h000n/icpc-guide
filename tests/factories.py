@@ -76,7 +76,6 @@ class ProblemAppearanceFactory(DjangoModelFactory):
 
     problem = factory.SubFactory(ProblemFactory)
     problem_set = factory.SubFactory(ProblemSetRootFactory)
-    order_index = factory.Sequence(lambda n: (n % 200) + 1)
     label = factory.Sequence(lambda n: chr(ord("A") + (n % 26)))
 
 

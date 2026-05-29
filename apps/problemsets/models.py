@@ -196,7 +196,7 @@ class SolvedAcTier(models.IntegerChoices):
 class Problem(models.Model):
     """Canonical problem — same problem can appear in multiple ProblemSets.
 
-    See spec v0.3 §3.1: per-set positioning (order_index, label) lives on
+    See spec v0.3 §3.1: per-set positioning (label) lives on
     `ProblemAppearance` so the same Problem can be linked into "ICPC Yokohama
     Regional" and "PTZ Camp" simultaneously without duplication.
     """
@@ -220,8 +220,8 @@ class ProblemAppearance(models.Model):
     """One occurrence of a Problem inside a specific ProblemSet.
 
     A Problem may have multiple appearances (e.g. ICPC regional + a training
-    camp). Position and label are per-appearance because labels differ across
-    sets.
+    camp). The label is per-appearance because labels differ across sets, and
+    it also defines display order within the set (A, B, C, …).
     """
 
     problem = models.ForeignKey(
@@ -234,16 +234,11 @@ class ProblemAppearance(models.Model):
         on_delete=models.CASCADE,
         related_name="appearances",
     )
-    order_index = models.PositiveSmallIntegerField()
     label = models.CharField(max_length=4)
 
     class Meta:
-        ordering = ["problem_set_id", "order_index"]
+        ordering = ["problem_set_id", "label"]
         constraints = [
-            models.UniqueConstraint(
-                fields=["problem_set", "order_index"],
-                name="unique_appearance_order_within_set",
-            ),
             models.UniqueConstraint(
                 fields=["problem_set", "label"],
                 name="unique_appearance_label_within_set",
@@ -254,7 +249,7 @@ class ProblemAppearance(models.Model):
             ),
         ]
         indexes = [
-            models.Index(fields=["problem_set", "order_index"]),
+            models.Index(fields=["problem_set", "label"]),
             models.Index(fields=["problem"]),
         ]
 

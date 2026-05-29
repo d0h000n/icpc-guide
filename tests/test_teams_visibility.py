@@ -82,7 +82,7 @@ def test_team_context_reveals_private_members_solves_to_teammates(client) -> Non
 
     leaf = ProblemSet.add_root(title="Day 1")
     p = Problem.objects.create(title="GhostlySolve")
-    ProblemAppearance.objects.create(problem=p, problem_set=leaf, order_index=1, label="A")
+    ProblemAppearance.objects.create(problem=p, problem_set=leaf, label="A")
     SolveRecord.objects.create(user=private_teammate, problem=p)
 
     client.force_login(me)
@@ -108,7 +108,7 @@ def test_non_member_cannot_force_team_context_via_url(client) -> None:
 
     leaf = ProblemSet.add_root(title="Day 1")
     p = Problem.objects.create(title="MysticProblem")
-    ProblemAppearance.objects.create(problem=p, problem_set=leaf, order_index=1, label="A")
+    ProblemAppearance.objects.create(problem=p, problem_set=leaf, label="A")
     SolveRecord.objects.create(user=private_teammate, problem=p)
 
     stranger = UserFactory()

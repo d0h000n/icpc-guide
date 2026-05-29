@@ -232,22 +232,21 @@ class Command(BaseCommand):
             return
 
         seen_problem_ids: list[int] = []
-        for i, p_data in enumerate(items, start=1):
+        for p_data in items:
             label = p_data["label"]
-            order_index = p_data.get("order_index", i)
             problem = self._upsert_problem(p_data)
             seen_problem_ids.append(problem.pk)
 
-            # Delete any colliding appearance on this set with same order/label
-            # but different Problem (so the unique constraints don't fire).
-            ProblemAppearance.objects.filter(problem_set=ps).filter(
-                models_q_or(order_index=order_index, label=label)
-            ).exclude(problem=problem).delete()
+            # Delete any colliding appearance on this set with the same label
+            # but a different Problem (so the unique constraint doesn't fire).
+            ProblemAppearance.objects.filter(problem_set=ps, label=label).exclude(
+                problem=problem
+            ).delete()
 
             _, created = ProblemAppearance.objects.update_or_create(
                 problem=problem,
                 problem_set=ps,
-                defaults={"label": label, "order_index": order_index},
+                defaults={"label": label},
             )
             if created:
                 self._counts["appearances_created"] += 1
@@ -295,13 +294,3 @@ class Command(BaseCommand):
             problem.save(update_fields=changed)
             self._counts["problems_updated"] += 1
         return problem
-
-
-def models_q_or(**filters):
-    """Tiny helper so the call site reads naturally — Q(a=1) | Q(b=2)."""
-    from django.db.models import Q
-
-    q = Q()
-    for k, v in filters.items():
-        q |= Q(**{k: v})
-    return q

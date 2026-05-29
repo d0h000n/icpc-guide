@@ -12,9 +12,9 @@ from .models import Problem, ProblemAppearance, ProblemSet
 class ProblemAppearanceInline(admin.TabularInline):
     model = ProblemAppearance
     extra = 0
-    fields = ("order_index", "label", "problem")
+    fields = ("label", "problem")
     autocomplete_fields = ("problem",)
-    ordering = ("order_index",)
+    ordering = ("label",)
 
 
 class CategoryMembershipInline(admin.TabularInline):
@@ -58,8 +58,8 @@ class ProblemAdmin(admin.ModelAdmin):
 
 @admin.register(ProblemAppearance)
 class ProblemAppearanceAdmin(admin.ModelAdmin):
-    list_display = ("problem_set", "order_index", "label", "problem")
+    list_display = ("problem_set", "label", "problem")
     list_filter = ("problem_set__categories",)
     search_fields = ("problem__title", "label", "problem_set__title")
     autocomplete_fields = ("problem", "problem_set")
-    ordering = ("problem_set", "order_index")
+    ordering = ("problem_set", "label")

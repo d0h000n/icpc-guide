@@ -88,8 +88,8 @@ def test_per_member_subtree_count_correct(client) -> None:
     leaf = ProblemSet.add_root(title="Day")
     p1 = Problem.objects.create(title="P1")
     p2 = Problem.objects.create(title="P2")
-    ProblemAppearance.objects.create(problem=p1, problem_set=leaf, order_index=1, label="A")
-    ProblemAppearance.objects.create(problem=p2, problem_set=leaf, order_index=2, label="B")
+    ProblemAppearance.objects.create(problem=p1, problem_set=leaf, label="A")
+    ProblemAppearance.objects.create(problem=p2, problem_set=leaf, label="B")
     SolveRecord.objects.create(user=me, problem=p1)  # me: 1/2
     SolveRecord.objects.create(user=other, problem=p1)
     SolveRecord.objects.create(user=other, problem=p2)  # bob: 2/2
@@ -114,7 +114,7 @@ def test_per_problem_team_solvers_column_for_leaf(client) -> None:
 
     leaf = ProblemSet.add_root(title="Day")
     p = Problem.objects.create(title="ShareMe")
-    ProblemAppearance.objects.create(problem=p, problem_set=leaf, order_index=1, label="A")
+    ProblemAppearance.objects.create(problem=p, problem_set=leaf, label="A")
     SolveRecord.objects.create(user=other, problem=p)
 
     client.force_login(me)
@@ -137,7 +137,7 @@ def test_team_aggregate_dedups_distinct_problems(client) -> None:
 
     leaf = ProblemSet.add_root(title="Day")
     p = Problem.objects.create(title="OnlyOne")
-    ProblemAppearance.objects.create(problem=p, problem_set=leaf, order_index=1, label="A")
+    ProblemAppearance.objects.create(problem=p, problem_set=leaf, label="A")
     SolveRecord.objects.create(user=me, problem=p)
     SolveRecord.objects.create(user=other, problem=p)
 
@@ -156,7 +156,7 @@ def test_team_context_works_for_internal_node(client) -> None:
     root = ProblemSet.add_root(title="Camp")
     leaf = root.add_child(title="Day")
     p = Problem.objects.create(title="P")
-    ProblemAppearance.objects.create(problem=p, problem_set=leaf, order_index=1, label="A")
+    ProblemAppearance.objects.create(problem=p, problem_set=leaf, label="A")
     SolveRecord.objects.create(user=me, problem=p)
 
     client.force_login(me)

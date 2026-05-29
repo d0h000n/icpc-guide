@@ -87,7 +87,7 @@ def test_me_stats_count_user_activity(client) -> None:
     user = UserFactory()
     leaf = ProblemSetRootFactory(title="Day 1")
     p = Problem.objects.create(title="P")
-    ProblemAppearance.objects.create(problem=p, problem_set=leaf, order_index=1, label="A")
+    ProblemAppearance.objects.create(problem=p, problem_set=leaf, label="A")
     SolveRecord.objects.create(user=user, problem=p)
     rating = RatingFactory(user=user, problem_set=leaf)
     CommentFactory(rating=rating)

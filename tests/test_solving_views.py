@@ -28,7 +28,7 @@ def test_toggle_creates_record_when_unsolved(client) -> None:
     user = UserFactory()
     leaf = ProblemSetRootFactory()
     problem = ProblemFactory()
-    ProblemAppearance.objects.create(problem=problem, problem_set=leaf, order_index=1, label="A")
+    ProblemAppearance.objects.create(problem=problem, problem_set=leaf, label="A")
     client.force_login(user)
 
     response = client.post(_toggle_url(leaf, problem))
@@ -44,7 +44,7 @@ def test_toggle_deletes_record_when_solved(client) -> None:
     user = UserFactory()
     leaf = ProblemSetRootFactory()
     problem = ProblemFactory()
-    ProblemAppearance.objects.create(problem=problem, problem_set=leaf, order_index=1, label="A")
+    ProblemAppearance.objects.create(problem=problem, problem_set=leaf, label="A")
     SolveRecord.objects.create(user=user, problem=problem)
     client.force_login(user)
 
@@ -82,7 +82,7 @@ def test_toggle_only_affects_self(client) -> None:
     user_b = UserFactory()
     leaf = ProblemSetRootFactory()
     problem = ProblemFactory()
-    ProblemAppearance.objects.create(problem=problem, problem_set=leaf, order_index=1, label="A")
+    ProblemAppearance.objects.create(problem=problem, problem_set=leaf, label="A")
     SolveRecord.objects.create(user=user_b, problem=problem)
 
     client.force_login(user_a)
@@ -99,8 +99,8 @@ def test_toggle_response_includes_oob_completion_counter(client) -> None:
     leaf = ProblemSetRootFactory(source=src)
     p1 = Problem.objects.create(title="X")
     p2 = Problem.objects.create(title="Y")
-    ProblemAppearance.objects.create(problem=p1, problem_set=leaf, order_index=1, label="A")
-    ProblemAppearance.objects.create(problem=p2, problem_set=leaf, order_index=2, label="B")
+    ProblemAppearance.objects.create(problem=p1, problem_set=leaf, label="A")
+    ProblemAppearance.objects.create(problem=p2, problem_set=leaf, label="B")
     client.force_login(user)
 
     response = client.post(_toggle_url(leaf, p1))
@@ -120,8 +120,8 @@ def test_toggle_dedup_across_multiple_appearances(client) -> None:
     s1 = ProblemSetRootFactory(source=src)
     s2 = ProblemSetRootFactory(source=src)
     p_shared = Problem.objects.create(title="Yokohama A / PTZ B")
-    ProblemAppearance.objects.create(problem=p_shared, problem_set=s1, order_index=1, label="A")
-    ProblemAppearance.objects.create(problem=p_shared, problem_set=s2, order_index=2, label="B")
+    ProblemAppearance.objects.create(problem=p_shared, problem_set=s1, label="A")
+    ProblemAppearance.objects.create(problem=p_shared, problem_set=s2, label="B")
     client.force_login(user)
 
     # Toggle on s1 — record created.
@@ -145,7 +145,7 @@ def test_detail_shows_toggle_buttons_for_authenticated(client) -> None:
     src = SourceFactory()
     leaf = ProblemSetRootFactory(source=src)
     p1 = Problem.objects.create(title="X")
-    ProblemAppearance.objects.create(problem=p1, problem_set=leaf, order_index=1, label="A")
+    ProblemAppearance.objects.create(problem=p1, problem_set=leaf, label="A")
     SolveRecord.objects.create(user=user, problem=p1)
 
     client.force_login(user)
@@ -163,7 +163,7 @@ def test_detail_no_toggle_for_anonymous(client) -> None:
     src = SourceFactory()
     leaf = ProblemSetRootFactory(source=src)
     p = Problem.objects.create(title="X")
-    ProblemAppearance.objects.create(problem=p, problem_set=leaf, order_index=1, label="A")
+    ProblemAppearance.objects.create(problem=p, problem_set=leaf, label="A")
 
     response = client.get(reverse("problemsets:detail", args=[leaf.pk]))
     body = response.content.decode()

@@ -16,11 +16,10 @@ from apps.solving.services import (
 from .factories import UserFactory
 
 
-def _link(problem, problem_set, order_index, label):
+def _link(problem, problem_set, label):
     return ProblemAppearance.objects.create(
         problem=problem,
         problem_set=problem_set,
-        order_index=order_index,
         label=label,
     )
 
@@ -36,8 +35,8 @@ def test_subtree_count_includes_self_and_descendants() -> None:
 
     p1 = Problem.objects.create(title="X")
     p2 = Problem.objects.create(title="Y")
-    _link(p1, leaf, 1, "A")
-    _link(p2, leaf, 2, "B")
+    _link(p1, leaf, "A")
+    _link(p2, leaf, "B")
 
     assert subtree_problem_count(root) == 2
     assert subtree_problem_count(child) == 2
@@ -51,9 +50,9 @@ def test_subtree_count_isolates_sibling_branches() -> None:
 
     a_leaf = a.add_child(title="A-leaf")
     b_leaf = b.add_child(title="B-leaf")
-    _link(Problem.objects.create(title="X"), a_leaf, 1, "A")
-    _link(Problem.objects.create(title="Y"), b_leaf, 1, "A")
-    _link(Problem.objects.create(title="Z"), b_leaf, 2, "B")
+    _link(Problem.objects.create(title="X"), a_leaf, "A")
+    _link(Problem.objects.create(title="Y"), b_leaf, "A")
+    _link(Problem.objects.create(title="Z"), b_leaf, "B")
 
     assert subtree_problem_count(a) == 1
     assert subtree_problem_count(b) == 2
@@ -67,8 +66,8 @@ def test_subtree_count_dedups_problem_appearing_in_multiple_descendants() -> Non
     leaf_b = root.add_child(title="B")
 
     shared = Problem.objects.create(title="Shared")
-    _link(shared, leaf_a, 1, "A")
-    _link(shared, leaf_b, 1, "A")
+    _link(shared, leaf_a, "A")
+    _link(shared, leaf_b, "A")
 
     # Two appearances, but only one distinct Problem.
     assert ProblemAppearance.objects.filter(problem=shared).count() == 2
@@ -80,7 +79,7 @@ def test_subtree_solved_count_anonymous_returns_zero() -> None:
     from django.contrib.auth.models import AnonymousUser
 
     leaf = ProblemSet.add_root(title="Day 1")
-    _link(Problem.objects.create(title="X"), leaf, 1, "A")
+    _link(Problem.objects.create(title="X"), leaf, "A")
 
     assert subtree_solved_count(leaf, AnonymousUser()) == 0
 
@@ -91,8 +90,8 @@ def test_subtree_solved_count_per_user() -> None:
     leaf = root.add_child(title="Day 1")
     p1 = Problem.objects.create(title="X")
     p2 = Problem.objects.create(title="Y")
-    _link(p1, leaf, 1, "A")
-    _link(p2, leaf, 2, "B")
+    _link(p1, leaf, "A")
+    _link(p2, leaf, "B")
 
     user = UserFactory()
     SolveRecord.objects.create(user=user, problem=p1)
@@ -111,8 +110,8 @@ def test_subtree_solved_count_dedups_shared_problem() -> None:
     leaf_b = root.add_child(title="B")
 
     shared = Problem.objects.create(title="Shared")
-    _link(shared, leaf_a, 1, "A")
-    _link(shared, leaf_b, 1, "A")
+    _link(shared, leaf_a, "A")
+    _link(shared, leaf_b, "A")
 
     user = UserFactory()
     SolveRecord.objects.create(user=user, problem=shared)
@@ -134,8 +133,8 @@ def test_internal_node_detail_shows_self_and_per_child_completion(client) -> Non
     s_leaf = summer.add_child(title="Summer Day 1")
     w_leaf = winter.add_child(title="Winter Day 1")
     sp = Problem.objects.create(title="X")
-    _link(sp, s_leaf, 1, "A")
-    _link(Problem.objects.create(title="Y"), w_leaf, 1, "A")
+    _link(sp, s_leaf, "A")
+    _link(Problem.objects.create(title="Y"), w_leaf, "A")
 
     SolveRecord.objects.create(user=user, problem=sp)
     client.force_login(user)
@@ -169,8 +168,8 @@ def test_list_shows_per_row_completion_for_authenticated(client) -> None:
     leaf = root.add_child(title="Day 1")
     p1 = Problem.objects.create(title="X")
     p2 = Problem.objects.create(title="Y")
-    _link(p1, leaf, 1, "A")
-    _link(p2, leaf, 2, "B")
+    _link(p1, leaf, "A")
+    _link(p2, leaf, "B")
     SolveRecord.objects.create(user=user, problem=p1)
 
     client.force_login(user)

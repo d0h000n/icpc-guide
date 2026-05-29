@@ -130,7 +130,6 @@ def approve_problem_set_proposal(
         ProblemAppearance.objects.create(
             problem=problem,
             problem_set=new_set,
-            order_index=idx,
             label=(item.get("label") or "")[:4] or chr(ord("A") + idx - 1),
         )
 

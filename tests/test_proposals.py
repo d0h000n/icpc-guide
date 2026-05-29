@@ -178,7 +178,7 @@ def test_approve_ps_proposal_creates_root_with_problems():
     assert new_set.created_by == proposal.user
     assert list(new_set.categories.all()) == [cat]
     assert Problem.objects.filter(title="Apple").exists()
-    apps_in_set = list(new_set.appearances.order_by("order_index"))
+    apps_in_set = list(new_set.appearances.order_by("label"))
     assert [a.label for a in apps_in_set] == ["A", "B"]
     assert apps_in_set[0].problem.solved_ac_tier_manual == 10
 

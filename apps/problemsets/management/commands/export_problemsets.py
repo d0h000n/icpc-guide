@@ -111,7 +111,7 @@ class Command(BaseCommand):
         appearances = list(
             ProblemAppearance.objects.filter(problem_set=node)
             .select_related("problem")
-            .order_by("order_index")
+            .order_by("label")
         )
         if appearances:
             out["problems"] = [self._serialize_appearance(a) for a in appearances]

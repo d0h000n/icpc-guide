@@ -23,8 +23,8 @@ def test_detail_anonymous_can_view_leaf(client) -> None:
     leaf.categories.add(cat)
     p1 = Problem.objects.create(title="Easy")
     p2 = Problem.objects.create(title="Hard")
-    ProblemAppearance.objects.create(problem=p1, problem_set=leaf, order_index=1, label="A")
-    ProblemAppearance.objects.create(problem=p2, problem_set=leaf, order_index=2, label="B")
+    ProblemAppearance.objects.create(problem=p1, problem_set=leaf, label="A")
+    ProblemAppearance.objects.create(problem=p2, problem_set=leaf, label="B")
 
     response = client.get(reverse("problemsets:detail", args=[leaf.pk]))
     assert response.status_code == 200

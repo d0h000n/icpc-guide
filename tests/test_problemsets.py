@@ -53,23 +53,13 @@ def test_problemset_move_updates_paths() -> None:
 
 
 @pytest.mark.django_db
-def test_appearance_order_unique_within_set() -> None:
-    leaf = ProblemSetRootFactory()
-    p = Problem.objects.create(title="P1")
-    ProblemAppearance.objects.create(problem=p, problem_set=leaf, order_index=1, label="A")
-    p2 = Problem.objects.create(title="P2")
-    with pytest.raises(IntegrityError):
-        ProblemAppearance.objects.create(problem=p2, problem_set=leaf, order_index=1, label="B")
-
-
-@pytest.mark.django_db
 def test_appearance_label_unique_within_set() -> None:
     leaf = ProblemSetRootFactory()
     p = Problem.objects.create(title="P1")
-    ProblemAppearance.objects.create(problem=p, problem_set=leaf, order_index=1, label="A")
+    ProblemAppearance.objects.create(problem=p, problem_set=leaf, label="A")
     p2 = Problem.objects.create(title="P2")
     with pytest.raises(IntegrityError):
-        ProblemAppearance.objects.create(problem=p2, problem_set=leaf, order_index=2, label="A")
+        ProblemAppearance.objects.create(problem=p2, problem_set=leaf, label="A")
 
 
 @pytest.mark.django_db
@@ -78,8 +68,8 @@ def test_appearance_same_label_allowed_across_different_sets() -> None:
     s2 = ProblemSetRootFactory()
     p1 = Problem.objects.create(title="X")
     p2 = Problem.objects.create(title="Y")
-    ProblemAppearance.objects.create(problem=p1, problem_set=s1, order_index=1, label="A")
-    ProblemAppearance.objects.create(problem=p2, problem_set=s2, order_index=1, label="A")
+    ProblemAppearance.objects.create(problem=p1, problem_set=s1, label="A")
+    ProblemAppearance.objects.create(problem=p2, problem_set=s2, label="A")
     assert ProblemAppearance.objects.count() == 2
 
 
@@ -90,8 +80,8 @@ def test_problem_can_appear_in_multiple_sets() -> None:
     s2 = ProblemSetRootFactory()
     p = Problem.objects.create(title="Shared problem (e.g. ICPC + PTZ)")
 
-    ProblemAppearance.objects.create(problem=p, problem_set=s1, order_index=1, label="A")
-    ProblemAppearance.objects.create(problem=p, problem_set=s2, order_index=3, label="C")
+    ProblemAppearance.objects.create(problem=p, problem_set=s1, label="A")
+    ProblemAppearance.objects.create(problem=p, problem_set=s2, label="C")
 
     assert p.appearances.count() == 2
     assert {a.problem_set_id for a in p.appearances.all()} == {s1.pk, s2.pk}
@@ -102,9 +92,9 @@ def test_appearance_unique_problem_per_set() -> None:
     """Same problem can't appear twice within the same set."""
     s = ProblemSetRootFactory()
     p = Problem.objects.create(title="Dup")
-    ProblemAppearance.objects.create(problem=p, problem_set=s, order_index=1, label="A")
+    ProblemAppearance.objects.create(problem=p, problem_set=s, label="A")
     with pytest.raises(IntegrityError):
-        ProblemAppearance.objects.create(problem=p, problem_set=s, order_index=2, label="B")
+        ProblemAppearance.objects.create(problem=p, problem_set=s, label="B")
 
 
 @pytest.mark.django_db
