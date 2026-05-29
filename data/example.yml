@@ -21,7 +21,7 @@ categories:
   description: International Collegiate Programming Contest
 problem_sets:
 - title: ICPC
-  child:
+  children:
   - title: Seoul Regional
     external_url: https://qoj.ac/category/50
     categories:
