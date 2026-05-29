@@ -1,0 +1,3 @@
+solved.ac 티어 배지 SVG를 여기 둡니다. 파일명 = 티어 정수 + .svg
+모델 SolvedAcTier 매핑: 1=Bronze V … 5=Bronze I, 6=Silver V … 30=Ruby I
+즉 1.svg ~ 30.svg (총 30개). 파일명은 solved.ac의 티어 번호와 동일합니다.

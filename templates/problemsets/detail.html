@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}{{ problem_set.title }} · Problem Set Tracker{% endblock %}
 
@@ -97,7 +98,6 @@
               <thead>
                 <tr>
                   <th class="w-16">#</th>
-                  <th class="w-20">라벨</th>
                   <th>제목</th>
                   <th class="w-32">티어</th>
                   <th class="w-24">링크</th>
@@ -116,7 +116,12 @@
                     <td>{{ appearance.problem.title }}</td>
                     <td>
                       {% if appearance.problem.solved_ac_tier_manual %}
-                        {{ appearance.problem.get_solved_ac_tier_manual_display }}
+                        {% with t=appearance.problem.solved_ac_tier_manual|stringformat:"s" %}
+                          <img src="{% static 'tiers/'|add:t|add:'.svg' %}"
+                               alt="{{ appearance.problem.get_solved_ac_tier_manual_display }}"
+                               title="{{ appearance.problem.get_solved_ac_tier_manual_display }}"
+                               class="w-6 h-6 inline-block" />
+                        {% endwith %}
                       {% else %}
                         <span class="opacity-30">—</span>
                       {% endif %}
