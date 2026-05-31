@@ -91,6 +91,38 @@ fly secrets set A=1 B=2 C=3 -a ps-tracker
 2. 로컬에서 동일 마이그레이션을 `DATABASE_URL=<prod-clone>` (snapshot 복원본)에서 시뮬레이션.
 3. 수정한 마이그레이션을 새 커밋으로 push (이미 적용된 마이그레이션을 수정 금지 — 항상 새 파일 추가).
 
+## 4½. ProblemSet 트리 데이터 동기화 (admin ↔ YAML)
+
+**원칙**: Django **admin이 단일 진실 원천**(canonical source). `data/example.yml`은 admin 상태의 **스냅샷**(version-controlled 백업 + 새 환경 시드용)이며, prod에 변경을 가하는 통로가 아니다.
+
+### 왜 이렇게 정했나
+YAML을 양방향 source로 쓰면 충돌이 난다: admin에서 노드를 옮기면 import matcher가 `(parent, title)`로 찾지 못해 같은 제목의 노드를 직속에 또 만든다 (실제로 `ICPC > 1. National > Yokohama Regional`을 옮긴 뒤 `ICPC > Yokohama Regional`로 재import 했더니 dup 발생). admin이 풍부한 구조의 출처라서 admin을 canonical로 잡는 게 자연스럽다.
+
+### 일반 흐름 (admin → YAML 백업)
+```bash
+# prod admin 상태를 YAML로 dump
+fly ssh console -a ps-tracker -C "/app/.venv/bin/python manage.py export_problemsets" 2>/dev/null > data/example.yml
+git add data/example.yml && git commit -m "snapshot: prod tree" && git push
+```
+잡지에 적당히 (주 1~2회 또는 큰 편집 후) 돌리면 git에 백업 + diff로 변경 이력이 남는다.
+
+### 새 환경 (dev 또는 새 prod) 부트스트랩
+```bash
+uv run manage.py import_problemsets data/example.yml
+```
+importer는 `(parent, title)` 매칭으로 idempotent — 같은 스냅샷을 두 번 import해도 변화 없음.
+
+### prod에 import 하지 말 것 (주의)
+prod에서 admin으로 트리를 바꾼 뒤 `data/example.yml`을 prod에 다시 import 하지 마라. matcher가 옮긴 노드를 못 찾으면 dup을 만든다. prod 변경은 admin에서, 변경 후 위의 export 흐름으로 YAML에 반영.
+
+### 만약 dup이 생겼다면
+`fly ssh console -a ps-tracker`에 진입해서 ProblemSet 셸로 직접 삭제:
+```python
+from apps.problemsets.models import ProblemSet
+ProblemSet.objects.get(pk=<dup_pk>).delete()  # cascades subtree
+```
+ProblemAppearance는 FK CASCADE로 정리되지만 Problem과 SolveRecord는 그대로 (다른 set과 공유 중이면 안전).
+
 ## 5. 백업 / 복원
 
 ### 자동 백업 (Fly Postgres)

@@ -1,70 +1,199 @@
 categories:
+- short_name: icpc
+  name: ICPC
+  description: 전 세계 ICPC 대회 문제들을 모아둔 세트로, 다양한 알고리즘 분야를 고르게 다루며 문제 해결의 균형감각을 요구한다.
 - short_name: jpn
   name: Japan
+  description: 일본 대회 문제들을 중심으로 구성된 세트로, 독창적인 발상과 정교한 관찰을 요구하는 문제가 자주 등장한다.
   url: https://qoj.ac/category/49
 - short_name: kor
   name: Korea
+  description: 한국 대회 문제들을 중심으로 구성된 세트로, 구현 비중이 높고 자료구조·DP를 활용한 실전적인 문제가 자주 등장한다.
   url: https://qoj.ac/category/50
-- short_name: eur
-  name: Europe
-  # url: 
-- short_name: ptz
-  name: Petrozavodsk Training Camp
-  description: 러시아·동유럽 주축으로 운영하는 대회로, 난이도가 전반적으로 높고 수학 비중이 강한 편이다.
-  url: https://qoj.ac/category/5
 - short_name: oi
   name: Olympiad in Informatics
-  description: 최고의 대회
+  description: 정보올림피아드 계열 문제들을 모아둔 세트로, 구현보다는 아이디어와 정해 풀이를 찾는 능력이 중요하다.
   url: https://qoj.ac/category/3
-- short_name: icpc
-  name: ICPC
-  description: International Collegiate Programming Contest
+- short_name: pol
+  name: Poland
+  description: 폴란드 대회 문제들을 중심으로 구성된 세트로, 난이도가 높고 자료구조·그래프·수학을 활용한 정교한 문제들이 많다.
+- short_name: rus
+  name: Russia
+  description: 러시아 대회 문제들을 중심으로 구성된 세트로, 수학적 사고와 정교한 알고리즘 설계를 요구하는 경우가 많다.
+- short_name: univ
+  name: University / School
+  description: 대학·학교 단위 대회 문제들을 중심으로 구성된 세트로, 정형화된 스타일보다 출제진의 개성이 강하게 드러나는 편이다.
 problem_sets:
 - title: ICPC
   children:
-  - title: Seoul Regional
-    external_url: https://qoj.ac/category/50
+  - title: 1. National
+    description: 각 나라 단위의 전국 대회 레벨.
     categories:
-    - kor
-    - icpc
-  - title: Yokohama Regional
-    external_url: https://qoj.ac/category/49
-    categories:
-    - jpn
     - icpc
     children:
-    - title: Yokohama 2022
-      year: 2022
+    - title: Europe Subregionals
+      children:
+      - title: Benelux — BCPC
+      - title: German — GCPC
+      - title: Nordic — NCPC
+        children:
+        - title: NCPC 2013
+          year: 2013
+          problems:
+          - label: H
+            title: 핀볼
+      - title: Poland — AMPPZ
+        categories:
+        - pol
+    - title: Northern Eurasia Subregionals
+      children:
+      - title: Moscow Subregional
+        external_url: https://codeforces.com/gyms?searchByNameOrIdQuery=Moscow+Subregional
+      - title: Northern Subregional
+        description: North-Western Russia
+        external_url: https://codeforces.com/gyms?searchByNameOrIdQuery=Northern+Subregional
+  - title: 2. Continent
+    description: 지역이나 대륙 단위에서 경쟁하는 레벨.
+    categories:
+    - icpc
+    children:
+    - title: Central Europe Regional
+    - title: Etc
+      children:
+      - title: Bangkok Regional 2025
+        year: 2025
+      - title: Manila Regional 2025
+        year: 2025
+    - title: Jakarta Regional
+    - title: Latin American Regional
+    - title: Northwestern Europe Regional
+    - title: Seoul Regional
+      external_url: https://qoj.ac/category/50
+      categories:
+      - kor
+      children:
+      - title: Seoul 2024
+        year: 2024
+    - title: Southeastern Europe Regional
+    - title: Southwestern Europe Regional
+    - title: Taichung Regional
+    - title: Yokohama Regional
+      external_url: https://qoj.ac/category/49
+      categories:
+      - jpn
+      children:
+      - title: Yokohama 2022
+        year: 2022
+        problems:
+        - label: A
+          title: Hasty Santa Claus
+          external_url: https://qoj.ac/contest/1101/problem/5470
+          tier: 12
+        - label: B
+          title: Interactive Number Guessing
+          external_url: https://qoj.ac/contest/1101/problem/5471
+          tier: 13
+  - title: 3. Continent Finals
+    description: 지역이나 대륙 단위에서 대표를 뽑는 대회들.
+    categories:
+    - icpc
+    children:
+    - title: Asia East Continent Final Contest
+      description: Chengdu, Nanjing, Shenyang 등 매년 달라지는 다양한 Regional을 거쳐 Asia East
+        Continent Final 에서 겨룹니다.
+    - title: Asia-Pacific Championship
+    - title: Europe Championship
+    - title: Latin America Championship
+    - title: North America Championship
+    - title: North America Invitational Programming Contest
+    - title: Northern Eurasia Finals
+  - title: 4. World Finals
+    description: 지역이나 대륙 단위에서 뽑힌 대표들이 한 자리에 경쟁하는 세계 결승.
+    categories:
+    - icpc
+    children:
+    - title: ICPC World Finals 2025
+      year: 2025
+- title: OI
+  external_url: https://qoj.ac/category/3
+  children:
+  - title: International Olympiad in Informatics
+    external_url: https://oj.uz/problems/source/ioi
+    categories:
+    - oi
+    children:
+    - title: IOI 2021
+    - title: IOI 2022
+    - title: IOI 2023
+    - title: IOI 2024
+    - title: IOI 2025
+  - title: Japanese Olympiad in Informatics
+    categories:
+    - oi
+    children:
+    - title: JOI Spring Camp
+  - title: Korean Olympiad in Informatics
+    categories:
+    - oi
+    children:
+    - title: KOI
+      children:
+      - title: KOI 1차 대회
+      - title: KOI 2차 대회
+        children:
+        - title: KOI 2022 2차 대회
+        - title: KOI 2023 2차 대회
+        - title: KOI 2024 2차 대회
+        - title: KOI 2025 2차 대회
+    - title: Korean Team Selection Contest
+      children:
+      - title: 2022년 선발고사
+      - title: 2023년 선발고사
+      - title: 2024년 선발고사
+      - title: 2025년 선발고사
+        problems:
+        - label: 1A
+          title: 그리드 복원
+          external_url: https://qoj.ac/contest/1932/problem/10178
+          tier: 22
+        - label: 1B
+          title: 입자 가속기
+          external_url: https://qoj.ac/contest/1932/problem/10179
+          tier: 22
+        - label: 1C
+          title: 다리 보수 공사
+          external_url: https://qoj.ac/contest/1932/problem/10180
+          tier: 17
+        - label: 1D
+          title: 안전 지대
+          external_url: https://qoj.ac/contest/1932/problem/10181
+          tier: 24
+  - title: Polish Olympiad in Informatics
+    categories:
+    - pol
+- title: Petrozavodsk Training Camp
+  description: Petrozavodsk Training Camp는 러시아·동유럽 팀들이 주축이 되어 운영하는 ICPC 스타일 팀 대회로,
+    문제 난이도가 전반적으로 높고 수학 비중이 강한 편이다.
+  external_url: https://qoj.ac/category/5
+  categories:
+  - rus
+  children:
+  - title: PTZ 2017 Summer
+    year: 2017
+    children:
+    - title: 'Day 1: Songyang Chen Contest 1'
       problems:
       - label: A
-        title: Hasty Santa Claus
-        external_url: https://qoj.ac/contest/1101/problem/5470
-        tier: 12
+        title: Little Q and Big Integers
+        external_url: https://qoj.ac/contest/2237/problem/12800
+        tier: 23
       - label: B
-        title: Interactive Number Guessing
-        external_url: https://qoj.ac/contest/1101/problem/5471
-        tier: 13
-  - title: Europe Subregionals
-    categories:
-    - eur
-    - icpc
-    children:
-    - title: Benelux - BCPC
-    - title: German - GCPC
-    - title: Nordic - NCPC
-      children:
-      - title: NCPC 2013
-        year: 2013
-        problems:
-        - label: H
-          title: 핀볼
-    - title: Poland - AMPPZ
-- title: PTZ Camp
-  description: Petrozavodsk Training Camp는 러시아·동유럽 팀들이 주축이 되어 운영하는 ICPC 스타일 팀 대회로,
-    문제 난이도가 전반적으로 높고 수학 비중이 강한 편이라는 평판이 있다.
-  categories:
-  - ptz
-  children:
+        title: Classic Quotation
+        external_url: https://qoj.ac/contest/2237/problem/12801
+      - label: C
+        title: Counting Divisors
+        external_url: https://qoj.ac/contest/2237/problem/12802
+        tier: 14
   - title: PTZ 2023 Summer
     year: 2023
     external_url: https://qoj.ac/category/263
@@ -96,40 +225,38 @@ problem_sets:
         title: Sieve Game
         external_url: https://qoj.ac/contest/1806/problem/10001
         tier: 11
-- title: OI
-  external_url: https://qoj.ac/category/3
+- title: Potyczki Algorytmiczne
+  categories:
+  - pol
+- title: Universal Cup
+- title: University / School
   children:
-  - title: International Olympiad in Informatics
-    external_url: https://oj.uz/problems/source/ioi
+  - title: 한양대학교
     categories:
-    - oi
+    - univ
     children:
-    - title: IOI 2025
-    - title: IOI 2024
-    - title: IOI 2023
-    - title: IOI 2022
-    - title: IOI 2021
-  - title: Korean Olympiad in Informatics
-    categories:
-    - oi
-    children:
-      - title: Korean Team Selection Contest
-        children:
-        - title: 2025년 선발고사
-        - title: 2024년 선발고사
-        - title: 2023년 선발고사
-        - title: 2022년 선발고사
-      - title: KOI
-        children:
-        - title: KOI 1차 대회
-        - title: KOI 2차 대회
-          children:
-          - title: KOI 2025 2차 대회
-          - title: KOI 2024 2차 대회
-          - title: KOI 2023 2차 대회
-          - title: KOI 2022 2차 대회
-  - title: Japanese Olympiad in Informatics
-    categories:
-    - oi
-    children:
-    - title: JOI Spring Camp
+    - title: 2026 🌸벚꽃컵🌸
+      year: 2026
+      external_url: https://project-ps.com/category/57
+      children:
+      - title: 2026 🌸벚꽃컵🌸 Div. 1
+        external_url: https://project-ps.com/category/58
+        problems:
+        - label: A
+          title: Astrophage
+          external_url: https://project-ps.com/problem/499
+        - label: B
+          title: RNG 3
+          external_url: https://project-ps.com/problem/498
+        - label: C
+          title: Ahoy
+          external_url: https://project-ps.com/problem/496
+        - label: D
+          title: 트리와 쿼리
+          external_url: https://project-ps.com/problem/497
+        - label: E
+          title: 내가 싫어하는 숫자
+          external_url: https://project-ps.com/problem/500
+        - label: F
+          title: 빠진 점 찾기
+          external_url: https://project-ps.com/problem/492
