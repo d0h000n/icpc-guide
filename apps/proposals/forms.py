@@ -5,6 +5,7 @@ from __future__ import annotations
 from django import forms
 
 from apps.categories.models import Category
+from apps.problemsets.bulk import BulkParseError, parse_problems_text
 from apps.problemsets.models import ProblemSet
 
 from .models import CategoryProposal, ProblemSetProposal
@@ -87,34 +88,10 @@ class ProblemSetProposalForm(forms.Form):
     )
 
     def clean_problems_text(self) -> list[dict]:
-        raw = (self.cleaned_data.get("problems_text") or "").strip()
-        if not raw:
-            return []
-        parsed = []
-        for lineno, line in enumerate(raw.splitlines(), start=1):
-            line = line.strip()
-            if not line:
-                continue
-            parts = [p.strip() for p in line.split("|")]
-            if len(parts) < 2:
-                raise forms.ValidationError(f"{lineno}번째 줄: '라벨 | 제목' 형식이 필요합니다.")
-            label, title = parts[0], parts[1]
-            if not label or not title:
-                raise forms.ValidationError(f"{lineno}번째 줄: 라벨과 제목은 필수입니다.")
-            url = parts[2] if len(parts) > 2 else ""
-            tier_raw = parts[3] if len(parts) > 3 else ""
-            tier: int | None = None
-            if tier_raw:
-                try:
-                    tier = int(tier_raw)
-                except ValueError as exc:
-                    raise forms.ValidationError(
-                        f"{lineno}번째 줄: 티어는 1-30 사이 정수여야 합니다."
-                    ) from exc
-                if not 1 <= tier <= 30:
-                    raise forms.ValidationError(f"{lineno}번째 줄: 티어는 1-30 사이여야 합니다.")
-            parsed.append({"label": label, "title": title, "external_url": url, "tier": tier})
-        return parsed
+        try:
+            return parse_problems_text(self.cleaned_data.get("problems_text") or "")
+        except BulkParseError as exc:
+            raise forms.ValidationError(str(exc)) from exc
 
     def to_payload(self) -> dict:
         """Snapshot form data as a JSON-safe dict for ProblemSetProposal.payload."""
