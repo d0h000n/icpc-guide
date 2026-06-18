@@ -137,12 +137,18 @@ def test_list_collapsed_button_indicator_for_non_leaf(client) -> None:
 
 
 @pytest.mark.django_db
-def test_list_no_toggle_button_for_anonymous(client) -> None:
+def test_list_anonymous_renders_client_side_toggle_button(client) -> None:
+    """Guests get a client-side (localStorage) toggle on non-leaf rows; the
+    server hx-post URL is intentionally absent (auth-only endpoint)."""
     root = ProblemSet.add_root(title="ICPC")
     root.add_child(title="Asia")
 
     body = client.get(reverse("problemsets:list")).content.decode()
+    # No server toggle URL (login_required endpoint).
     assert _toggle_url(root) not in body
+    # But the non-leaf row still gets a client-side toggle button.
+    assert "data-collapse-btn" in body
+    assert "__psTrackerToggleGuestCollapse" in body
 
 
 @pytest.mark.django_db

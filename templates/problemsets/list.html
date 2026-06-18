@@ -73,13 +73,21 @@
           <ul class="divide-y divide-base-200">
             {% for row in rows %}
               <li class="px-4 py-2.5 hover:bg-base-200/50 transition-colors"
+                  data-pk="{{ row.node.pk }}"
+                  data-path="{{ row.node.path }}"
                   style="padding-left: calc(1rem + {{ row.node.depth|add:"-1" }} * 1.25rem);">
                 <div class="flex items-center justify-between gap-4">
                   <div class="flex items-center gap-2 min-w-0 flex-1">
-                    {% if user.is_authenticated and not row.node.is_leaf %}
+                    {% if not row.node.is_leaf %}
                       <button type="button"
-                              hx-post="{% url 'problemsets:toggle_collapse' pk=row.node.pk %}"
-                              hx-swap="none"
+                              data-collapse-btn
+                              data-pk="{{ row.node.pk }}"
+                              {% if user.is_authenticated %}
+                                hx-post="{% url 'problemsets:toggle_collapse' pk=row.node.pk %}"
+                                hx-swap="none"
+                              {% else %}
+                                onclick="window.__psTrackerToggleGuestCollapse && window.__psTrackerToggleGuestCollapse(this)"
+                              {% endif %}
                               class="btn btn-ghost btn-xs px-1 shrink-0"
                               aria-label="{% if row.is_collapsed %}펼치기{% else %}접기{% endif %}"
                               title="{% if row.is_collapsed %}펼치기{% else %}접기{% endif %}">
@@ -119,6 +127,70 @@
         {% endif %}
       </div>
     </section>
+
+    {% if not user.is_authenticated %}
+      <script>
+        // Client-side tree collapse for guests (logged-in users have server-side
+        // CollapsedNode). Hides any row whose ancestor pk is in localStorage.
+        (function () {
+          const KEY = "ps-tracker:guest-collapsed-pks";
+
+          function loadSet() {
+            try {
+              const raw = localStorage.getItem(KEY);
+              return new Set(raw ? JSON.parse(raw) : []);
+            } catch (_e) { return new Set(); }
+          }
+          function saveSet(set) {
+            localStorage.setItem(KEY, JSON.stringify([...set]));
+          }
+
+          function apply() {
+            const root = document.getElementById("set-tree");
+            if (!root) return;
+            const collapsed = loadSet();
+            const rows = root.querySelectorAll("li[data-path]");
+            // Paths of currently-collapsed visible nodes.
+            const collapsedPaths = [];
+            rows.forEach(li => {
+              const pk = Number(li.dataset.pk);
+              if (collapsed.has(pk)) collapsedPaths.push(li.dataset.path);
+            });
+            rows.forEach(li => {
+              const p = li.dataset.path;
+              const hide = collapsedPaths.some(cp => p !== cp && p.startsWith(cp));
+              li.style.display = hide ? "none" : "";
+            });
+            // Sync button glyph/labels.
+            root.querySelectorAll("button[data-collapse-btn]").forEach(btn => {
+              const pk = Number(btn.dataset.pk);
+              const isCollapsed = collapsed.has(pk);
+              btn.textContent = isCollapsed ? "▶" : "▼";
+              const label = isCollapsed ? "펼치기" : "접기";
+              btn.setAttribute("aria-label", label);
+              btn.title = label;
+            });
+          }
+
+          window.__psTrackerToggleGuestCollapse = function (btn) {
+            const pk = Number(btn.dataset.pk);
+            const set = loadSet();
+            if (set.has(pk)) set.delete(pk); else set.add(pk);
+            saveSet(set);
+            apply();
+          };
+
+          apply();
+          // Re-apply after HTMX swaps the tree (filters changed, etc.).
+          document.body.addEventListener("htmx:afterSwap", function (e) {
+            if (e.target && (e.target.id === "set-tree" ||
+                e.target.querySelector && e.target.querySelector("#set-tree"))) {
+              apply();
+            }
+          });
+        })();
+      </script>
+    {% endif %}
 
   </div>
 {% endblock %}
