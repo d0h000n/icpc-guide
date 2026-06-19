@@ -125,13 +125,18 @@ ProblemAppearance는 FK CASCADE로 정리되지만 Problem과 SolveRecord는 그
 
 ## 5. 백업 / 복원
 
-### 자동 백업 (Fly Postgres)
-Fly Postgres는 일일 snapshot을 7일간 자동 보관 (Fly 기본 정책). 별도 설정 불필요.
+### 자동 백업 (Fly Postgres — unmanaged)
+
+⚠ Unmanaged Fly Postgres(=`fly pg create`로 만든 클러스터)는 **자동 백업이 기본 OFF**. 클러스터 만든 직후 한 번 켜야 함:
 
 ```bash
+fly pg backup enable -a <pg-cluster>        # 일회성. 켜고 나면 일일 snapshot이 자동으로 쌓임
+fly pg backups list -a <pg-cluster>         # 보관 중인 snapshot 확인
 fly pg list                                 # 클러스터 목록
-fly pg backups list -a <pg-cluster>         # 보관 중인 snapshot
 ```
+켠 직후엔 목록이 비어 보이는 게 정상 (첫 스냅샷 안 찍힘). 다음 날 1개 이상 보이면 정상 동작.
+
+(Managed Postgres `fly mpg`는 자동 백업이 디폴트 ON.)
 
 ### 백업본 복원 (catastrophic recovery)
 1. 새 Postgres cluster를 snapshot 기반으로 띄움:
